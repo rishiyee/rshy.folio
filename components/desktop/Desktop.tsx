@@ -31,17 +31,6 @@ const BACKGROUND_STORAGE_KEY = "vonnue-os-background-index";
 const DOC_PATH = "/case1.pdf";
 const PROJECT_NAME = "Case Study"; // TODO: swap in the real project name
 
-const WINDOW_CONTENT: Record<"about", { title: string; body: string[] }> = {
-  about: {
-    title: "about.txt",
-    body: [
-      `${COMPANY_NAME} — design & engineering studio.`,
-      "",
-      "We build interfaces, brands, and products.",
-    ],
-  },
-};
-
 const WINDOW_TITLES = {
   works: "/works",
   terminal: "~/terminal",
@@ -364,13 +353,21 @@ export default function Desktop() {
               </div>
             ) : w.id === "doc" ? (
               <PdfViewer src={DOC_PATH} />
-            ) : (
-              WINDOW_CONTENT[w.id].body.map((line, idx) => (
-                <div key={idx} className={line === "" ? "h-3" : undefined}>
-                  {line}
+            ) : w.id === "about" ? (
+              <div className="flex gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/me.png"
+                  alt="Founder portrait"
+                  className="w-24 sm:w-28 aspect-[3/4] object-cover border border-line shrink-0"
+                />
+                <div>
+                  <div>{`${COMPANY_NAME} — design & engineering studio.`}</div>
+                  <div className="h-3" />
+                  <div>We build interfaces, brands, and products.</div>
                 </div>
-              ))
-            )}
+              </div>
+            ) : null}
           </WindowPanel>
         ))}
 
