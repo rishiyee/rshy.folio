@@ -1,5 +1,3 @@
-export const COMPANY_NAME = "VONNUE";
-
 // TODO: fill in real profile URLs — left blank intentionally, not guessed.
 export const SOCIAL_LINKS = {
   about: "",

@@ -3,9 +3,6 @@
 import { useEffect, useState } from "react";
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
@@ -26,7 +23,7 @@ export default function Clock() {
 
   return (
     <span className="text-[10px] sm:text-xs tabular-nums text-foreground select-none whitespace-nowrap">
-      {label ?? "--- --, ----, --:--:--.--- -- ---"}
+      {label ?? "--:--:--.--- -- ---"}
     </span>
   );
 }

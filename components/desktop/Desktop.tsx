@@ -11,7 +11,6 @@ import Terminal from "./Terminal";
 import PdfViewer from "./PdfViewer";
 import PdfThumbnail from "./PdfThumbnail";
 import MinimizedDock from "./MinimizedDock";
-import { COMPANY_NAME } from "@/lib/config";
 import {
   pointTarget,
   toViewportRect,
@@ -362,7 +361,7 @@ export default function Desktop() {
                   className="w-24 sm:w-28 aspect-[3/4] object-cover border border-line shrink-0"
                 />
                 <div>
-                  <div>{`${COMPANY_NAME} — design & engineering studio.`}</div>
+                  <div>Design & engineering studio.</div>
                   <div className="h-3" />
                   <div>We build interfaces, brands, and products.</div>
                 </div>

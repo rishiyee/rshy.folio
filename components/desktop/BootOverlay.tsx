@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const BOOT_LINES = [
-  "VONNUE OS v1.0",
+  "OS v1.0",
   "[ OK ] Initializing kernel",
   "[ OK ] Mounting /works",
   "[ OK ] Mounting /terminal",

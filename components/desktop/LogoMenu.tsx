@@ -1,7 +1,7 @@
 "use client";
 
 import Dropdown from "./Dropdown";
-import { COMPANY_NAME, SOCIAL_LINKS } from "@/lib/config";
+import { SOCIAL_LINKS } from "@/lib/config";
 
 function LogoMark() {
   return (
@@ -35,14 +35,7 @@ export default function LogoMenu({
 
   return (
     <Dropdown
-      trigger={() => (
-        <>
-          <LogoMark />
-          <span className="font-bold tracking-[0.1em] text-[10px] sm:text-xs text-white">
-            {COMPANY_NAME}
-          </span>
-        </>
-      )}
+      trigger={() => <LogoMark />}
       open={open}
       hoverActivate={hoverActivate}
       onOpen={onOpen}
@@ -60,7 +53,7 @@ export default function LogoMenu({
             }}
             className="block w-full text-left px-3 py-1 text-xs font-medium uppercase text-neutral-900 hover:bg-[rgb(0,4,255)] hover:text-white transition-colors"
           >
-            About Vonnue
+            About
           </button>
           {links.map((link) => (
             <a

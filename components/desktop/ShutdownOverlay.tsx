@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 type Phase = "idle" | "closing" | "black" | "booting";
 
 const BOOT_LINES = [
-  "VONNUE OS — BOOT SEQUENCE",
+  "OS — BOOT SEQUENCE",
   "[ OK ] Initializing kernel",
   "[ OK ] Mounting /works",
   "[ OK ] Mounting /terminal",

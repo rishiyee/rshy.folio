@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { COMPANY_NAME, SOCIAL_LINKS } from "@/lib/config";
+import { SOCIAL_LINKS } from "@/lib/config";
 import { getWeightedClock, getYearProgress } from "@/lib/time";
 
 type Line = { text: string; kind: "output" | "command" | "error" };
@@ -12,7 +12,7 @@ type FsNode = FsFile | FsDir;
 const HELP_LINES = [
   "Commands:",
   "  help              show this list",
-  "  about             about vonnue",
+  "  about             about this site",
   "  whoami            who you are",
   "  socials           social links",
   "  clock             current weighted time",
@@ -68,7 +68,7 @@ function buildFs(): FsDir {
       },
       "about.txt": {
         type: "file",
-        content: [`${COMPANY_NAME} — design & engineering studio.`],
+        content: ["Design & engineering studio."],
       },
       "socials.txt": {
         type: "file",
@@ -111,7 +111,7 @@ function getNode(path: string[]): FsNode | null {
 }
 
 function formatPrompt(cwd: string[]) {
-  return `visitor@vonnue:~${cwd.length ? "/" + cwd.join("/") : ""}$`;
+  return `visitor@localhost:~${cwd.length ? "/" + cwd.join("/") : ""}$`;
 }
 
 function commonPrefix(values: string[]) {
@@ -147,7 +147,7 @@ export default function Terminal({
   onOpenCase: () => void;
 }) {
   const [lines, setLines] = useState<Line[]>([
-    { text: `${COMPANY_NAME} OS terminal — type "help" to get started.`, kind: "output" },
+    { text: 'OS terminal — type "help" to get started.', kind: "output" },
   ]);
   const [draft, setDraft] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -183,7 +183,7 @@ export default function Terminal({
         push(HELP_LINES.map((text) => ({ text, kind: "output" })));
         break;
       case "about":
-        push([{ text: `${COMPANY_NAME} — design & engineering studio.`, kind: "output" }]);
+        push([{ text: "Design & engineering studio.", kind: "output" }]);
         break;
       case "whoami":
         push([{ text: "visitor", kind: "output" }]);

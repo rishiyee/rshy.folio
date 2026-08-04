@@ -8,9 +8,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VONNUE — OS Terminal",
+  title: "OS Terminal",
   description:
-    "VONNUE's OS-style portfolio — boot into a simulated desktop, browse works, and poke around the built-in terminal.",
+    "An OS-style portfolio — boot into a simulated desktop, browse works, and poke around the built-in terminal.",
 };
 
 export default function RootLayout({
