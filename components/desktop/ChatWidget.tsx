@@ -40,7 +40,6 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelAnimationRef = useRef<Animation | null>(null);
   const greetedRef = useRef(false);
-  const interactedRef = useRef(false);
 
   function queueSystemMessage(text: string) {
     setTyping({ text, revealed: 0 });
@@ -86,17 +85,9 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
     return () => animation.cancel();
   }, [closing, open]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!interactedRef.current) openChat();
-    }, 15000);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useImperativeHandle(ref, () => ({
     openWithMessage(text: string) {
-      interactedRef.current = true;
       greetedRef.current = true;
       setOpen(true);
       queueSystemMessage(text);
@@ -122,7 +113,6 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
   }, [messages, typing, open]);
 
   function toggleOpen() {
-    interactedRef.current = true;
     if (open) {
       close();
     } else {
@@ -131,7 +121,6 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
   }
 
   function close() {
-    interactedRef.current = true;
     const panel = panelRef.current;
     const button = buttonRef.current;
     if (!panel || !button || closing) {

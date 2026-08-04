@@ -43,7 +43,7 @@ const WINDOW_TITLES = {
 };
 
 type WindowId = "works" | "terminal" | "about" | "doc" | "notes" | "contact";
-type IconId = "works" | "terminal" | "notes" | "contact";
+type IconId = "works" | "terminal" | "notes" | "contact" | "about";
 type OpenWindow = {
   id: WindowId;
   position: { x: number; y: number };
@@ -60,6 +60,7 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   terminal: { x: 24, y: 160 },
   notes: { x: 24, y: 264 },
   contact: { x: 24, y: 368 },
+  about: { x: 24, y: 472 },
 };
 
 export default function Desktop() {
@@ -157,7 +158,8 @@ export default function Desktop() {
       openWindow.id === "works" ||
       openWindow.id === "terminal" ||
       openWindow.id === "notes" ||
-      openWindow.id === "contact"
+      openWindow.id === "contact" ||
+      openWindow.id === "about"
         ? iconElements.current[openWindow.id]
         : openWindow.id === "doc"
           ? docLauncherRef.current
@@ -320,20 +322,8 @@ export default function Desktop() {
           }}
         />
         <DesktopIcon
-          label="Notes"
-          icon="/file.svg"
-          position={iconPositions.notes}
-          labelTone={iconLabelTone}
-          onMove={(position) => moveIcon("notes", position)}
-          onOpen={(origin) => openWindow("notes", origin)}
-          onElement={(element) => {
-            if (element) iconElements.current.notes = element;
-            else delete iconElements.current.notes;
-          }}
-        />
-        <DesktopIcon
           label="Contact"
-          icon="/globe.svg"
+          icon="/contact.svg"
           position={iconPositions.contact}
           labelTone={iconLabelTone}
           onMove={(position) => moveIcon("contact", position)}
@@ -341,6 +331,18 @@ export default function Desktop() {
           onElement={(element) => {
             if (element) iconElements.current.contact = element;
             else delete iconElements.current.contact;
+          }}
+        />
+        <DesktopIcon
+          label="About"
+          icon="/window.svg"
+          position={iconPositions.about}
+          labelTone={iconLabelTone}
+          onMove={(position) => moveIcon("about", position)}
+          onOpen={(origin) => openWindow("about", origin)}
+          onElement={(element) => {
+            if (element) iconElements.current.about = element;
+            else delete iconElements.current.about;
           }}
         />
 
