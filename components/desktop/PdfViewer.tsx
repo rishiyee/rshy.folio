@@ -62,6 +62,12 @@ export default function PdfViewer({ src }: { src: string }) {
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
   const [width, setWidth] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [minDelayDone, setMinDelayDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinDelayDone(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -107,7 +113,7 @@ export default function PdfViewer({ src }: { src: string }) {
     <div ref={containerRef} className="w-full min-h-full bg-neutral-700">
       {error ? (
         <div className="p-4 text-red-300">{error}</div>
-      ) : document && width > 0 ? (
+      ) : document && width > 0 && minDelayDone ? (
         Array.from({ length: document.numPages }, (_, index) => (
           <PdfPage
             key={index + 1}
@@ -117,7 +123,11 @@ export default function PdfViewer({ src }: { src: string }) {
           />
         ))
       ) : (
-        <div className="p-4 text-foreground/70">Loading PDF...</div>
+        <div className="loading-pattern flex h-full min-h-[200px] items-center justify-center border-2 border-line">
+          <span className="border-2 border-line bg-background px-3 py-1.5 text-xs uppercase tracking-[0.08em] text-foreground">
+            loading<span className="cursor-blink">_</span>
+          </span>
+        </div>
       )}
     </div>
   );
