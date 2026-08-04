@@ -74,6 +74,13 @@ body {
   border: 1px solid var(--line);
 }
 
+.loading-pattern {
+  background:
+    linear-gradient(45deg, var(--line) 25%, transparent 25%) 0 0 / 8px 8px,
+    linear-gradient(45deg, transparent 75%, var(--line) 75%) 0 0 / 8px 8px,
+    var(--background);
+}
+
 @keyframes blink-cursor {
   0%,
   49% {
