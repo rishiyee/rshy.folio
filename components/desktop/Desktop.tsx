@@ -8,6 +8,8 @@ import ShutdownOverlay from "./ShutdownOverlay";
 import BootOverlay from "./BootOverlay";
 import ChatWidget, { type ChatWidgetHandle } from "./ChatWidget";
 import Terminal from "./Terminal";
+import NotesApp from "./NotesApp";
+import AboutWindow from "./AboutWindow";
 import PdfViewer from "./PdfViewer";
 import PdfThumbnail from "./PdfThumbnail";
 import MinimizedDock from "./MinimizedDock";
@@ -35,10 +37,11 @@ const WINDOW_TITLES = {
   terminal: "~/terminal",
   about: "about.txt",
   doc: "case1.pdf",
+  notes: "notes.txt",
 };
 
-type WindowId = "works" | "terminal" | "about" | "doc";
-type IconId = "works" | "terminal";
+type WindowId = "works" | "terminal" | "about" | "doc" | "notes";
+type IconId = "works" | "terminal" | "notes";
 type OpenWindow = {
   id: WindowId;
   position: { x: number; y: number };
@@ -53,6 +56,7 @@ type OpenWindow = {
 const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   works: { x: 24, y: 56 },
   terminal: { x: 24, y: 160 },
+  notes: { x: 24, y: 264 },
 };
 
 export default function Desktop() {
@@ -147,7 +151,7 @@ export default function Desktop() {
 
   function resolveOriginalTarget(openWindow: OpenWindow) {
     const iconElement =
-      openWindow.id === "works" || openWindow.id === "terminal"
+      openWindow.id === "works" || openWindow.id === "terminal" || openWindow.id === "notes"
         ? iconElements.current[openWindow.id]
         : openWindow.id === "doc"
           ? docLauncherRef.current
@@ -309,6 +313,18 @@ export default function Desktop() {
             else delete iconElements.current.terminal;
           }}
         />
+        <DesktopIcon
+          label="Notes"
+          icon="/file.svg"
+          position={iconPositions.notes}
+          labelTone={iconLabelTone}
+          onMove={(position) => moveIcon("notes", position)}
+          onOpen={(origin) => openWindow("notes", origin)}
+          onElement={(element) => {
+            if (element) iconElements.current.notes = element;
+            else delete iconElements.current.notes;
+          }}
+        />
 
         {windows.filter((w) => !w.minimized).map((w) => (
           <WindowPanel
@@ -326,7 +342,12 @@ export default function Desktop() {
             onToggleMaximize={() => toggleMaximizeWindow(w.id)}
             onMinimize={() => minimizeWindow(w.id)}
             onTransitionComplete={() => completeWindowTransition(w.id)}
-            contentClassName={w.id === "doc" ? "p-0" : undefined}
+            windowClassName={
+              w.id === "about"
+                ? "w-[min(760px,calc(100vw-2rem))] h-[min(590px,calc(100vh-5rem))]"
+                : undefined
+            }
+            contentClassName={w.id === "doc" || w.id === "about" ? "p-0" : undefined}
           >
             {w.id === "terminal" ? (
               <Terminal
@@ -353,19 +374,9 @@ export default function Desktop() {
             ) : w.id === "doc" ? (
               <PdfViewer src={DOC_PATH} />
             ) : w.id === "about" ? (
-              <div className="flex gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/me.png"
-                  alt="Founder portrait"
-                  className="w-24 sm:w-28 aspect-[3/4] object-cover border border-line shrink-0"
-                />
-                <div>
-                  <div>Design & engineering studio.</div>
-                  <div className="h-3" />
-                  <div>We build interfaces, brands, and products.</div>
-                </div>
-              </div>
+              <AboutWindow />
+            ) : w.id === "notes" ? (
+              <NotesApp />
             ) : null}
           </WindowPanel>
         ))}

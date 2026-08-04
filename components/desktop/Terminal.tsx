@@ -23,12 +23,14 @@ const HELP_LINES = [
   "  cd [path]         change directory (.. goes up, ~ goes home)",
   "  cat <file>        print a file's contents",
   "  pwd               print working directory",
+  "  mkdir <name>      create a directory",
+  "  touch <file>      create an empty file",
   "  works             quick summary of active work",
   "  case1             open the Case 1 PDF",
   "  open case1.pdf    open the Case 1 PDF",
   "",
   "Other:",
-  "  echo <text>       print text",
+  "  echo <text>       print text (echo text > file writes to a file)",
   "  clear             clear the screen",
   "  exit              close this window",
 ];
@@ -45,6 +47,8 @@ const COMMANDS = [
   "ls",
   "cd",
   "cat",
+  "mkdir",
+  "touch",
   "echo",
   "clear",
   "exit",
@@ -108,6 +112,14 @@ function getNode(path: string[]): FsNode | null {
     node = next;
   }
   return node;
+}
+
+function getParentAndName(path: string[]): { parent: FsDir; name: string } | null {
+  if (path.length === 0) return null;
+  const name = path[path.length - 1];
+  const parent = getNode(path.slice(0, -1));
+  if (!parent || parent.type !== "dir") return null;
+  return { parent, name };
 }
 
 function formatPrompt(cwd: string[]) {
@@ -275,9 +287,55 @@ export default function Terminal({
         }
         break;
       }
-      case "echo":
-        push([{ text: arg, kind: "output" }]);
+      case "mkdir": {
+        if (!arg) {
+          push([{ text: "usage: mkdir <name>", kind: "error" }]);
+          break;
+        }
+        const info = getParentAndName(resolvePath(cwd, arg));
+        if (!info) {
+          push([{ text: `mkdir: cannot create directory '${arg}'`, kind: "error" }]);
+        } else if (info.parent.children[info.name]) {
+          push([
+            { text: `mkdir: cannot create directory '${arg}': File exists`, kind: "error" },
+          ]);
+        } else {
+          info.parent.children[info.name] = { type: "dir", children: {} };
+        }
         break;
+      }
+      case "touch": {
+        if (!arg) {
+          push([{ text: "usage: touch <file>", kind: "error" }]);
+          break;
+        }
+        const info = getParentAndName(resolvePath(cwd, arg));
+        if (!info) {
+          push([{ text: `touch: cannot touch '${arg}'`, kind: "error" }]);
+        } else if (!info.parent.children[info.name]) {
+          info.parent.children[info.name] = { type: "file", content: [] };
+        } else if (info.parent.children[info.name].type !== "file") {
+          push([{ text: `touch: cannot touch '${arg}': Is a directory`, kind: "error" }]);
+        }
+        break;
+      }
+      case "echo": {
+        const redirect = arg.match(/^([\s\S]*)\s>\s(\S+)$/);
+        if (!redirect) {
+          push([{ text: arg, kind: "output" }]);
+          break;
+        }
+        const [, content, target] = redirect;
+        const info = getParentAndName(resolvePath(cwd, target));
+        if (!info) {
+          push([{ text: `echo: cannot create '${target}'`, kind: "error" }]);
+        } else if (info.parent.children[info.name]?.type === "dir") {
+          push([{ text: `echo: ${target}: Is a directory`, kind: "error" }]);
+        } else {
+          info.parent.children[info.name] = { type: "file", content: [content] };
+        }
+        break;
+      }
       case "sudo":
         push([{ text: "Nice try. Permission denied.", kind: "error" }]);
         break;
@@ -317,7 +375,7 @@ export default function Terminal({
         return;
       }
 
-      if (!["cd", "ls", "cat"].includes(command)) return;
+      if (!["cd", "ls", "cat", "mkdir", "touch"].includes(command)) return;
       const matches = getPathCompletions(cwd, argument, command === "cd");
       if (matches.length === 1) {
         const suffix = matches[0].endsWith("/") ? "" : " ";
