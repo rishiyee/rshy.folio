@@ -8,9 +8,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OS Terminal",
+  title: "Designer & Developer Portfolio",
   description:
-    "An OS-style portfolio — boot into a simulated desktop, browse works, and poke around the built-in terminal.",
+    "A personal design and development portfolio presented as an interactive desktop.",
 };
 
 export default function RootLayout({

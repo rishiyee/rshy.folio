@@ -25,8 +25,8 @@ Create a full-width menu bar fixed at the top of the screen.
 
 Display:
 
--   Company Logo
--   Company Name: **VONNUE**
+-   Portfolio Mark
+-   Site Name: **PORTFOLIO**
 
 Use **Geist Mono** for the company name.
 
@@ -56,16 +56,16 @@ Use **Geist Mono** for the company name.
 
 ------------------------------------------------------------------------
 
-# Company Logo Dropdown
+# Portfolio Mark Dropdown
 
-Clicking the company logo should open a dropdown menu.
+Clicking the portfolio mark should open a dropdown menu.
 
 The dropdown should have proper open/close interactions and close when
 clicking outside.
 
 ## Menu Items
 
--   About Vonnue
+-   About
 -   Behance
 -   Dribbble
 -   LinkedIn

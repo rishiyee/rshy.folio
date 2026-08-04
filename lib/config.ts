@@ -5,7 +5,7 @@ export const SOCIAL_LINKS = {
   dribbble: "",
   linkedin: "",
   instagram: "",
-  email: "", // e.g. "mailto:hello@vonnue.com"
+  email: "", // e.g. "mailto:hello@example.com"
 };
 
 export const SITE_URL = "";

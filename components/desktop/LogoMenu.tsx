@@ -5,8 +5,12 @@ import { SOCIAL_LINKS } from "@/lib/config";
 
 function LogoMark() {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src="/vonnue-logo.svg" alt="" className="w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0" />
+    <span
+      aria-hidden="true"
+      className="flex h-4 w-4 shrink-0 items-center justify-center border border-current text-[9px] font-semibold leading-none sm:h-[18px] sm:w-[18px]"
+    >
+      P
+    </span>
   );
 }
 

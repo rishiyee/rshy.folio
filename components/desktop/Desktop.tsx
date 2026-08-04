@@ -28,7 +28,7 @@ const BACKGROUND_COLORS = [
   "rgb(255, 242, 0)", // FFF200
 ];
 
-const BACKGROUND_STORAGE_KEY = "vonnue-os-background-index";
+const BACKGROUND_STORAGE_KEY = "portfolio-os-background-index";
 
 const DOC_PATH = "/case1.pdf";
 const PROJECT_NAME = "Case Study"; // TODO: swap in the real project name
@@ -362,10 +362,16 @@ export default function Desktop() {
             onTransitionComplete={() => completeWindowTransition(w.id)}
             windowClassName={
               w.id === "about"
-                ? "w-[min(760px,calc(100vw-2rem))] h-[min(590px,calc(100vh-5rem))]"
+                ? "w-[min(880px,calc(100vw-2rem))] h-[min(650px,calc(100vh-5rem))]"
+                : w.id === "contact"
+                  ? "w-[min(820px,calc(100vw-2rem))] h-[min(610px,calc(100vh-5rem))]"
+                  : undefined
+            }
+            contentClassName={
+              w.id === "doc" || w.id === "about" || w.id === "contact"
+                ? "p-0"
                 : undefined
             }
-            contentClassName={w.id === "doc" || w.id === "about" ? "p-0" : undefined}
           >
             {w.id === "terminal" ? (
               <Terminal

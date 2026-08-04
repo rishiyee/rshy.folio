@@ -72,7 +72,7 @@ function buildFs(): FsDir {
       },
       "about.txt": {
         type: "file",
-        content: ["Design & engineering studio."],
+        content: ["Independent designer and developer portfolio."],
       },
       "socials.txt": {
         type: "file",
@@ -195,7 +195,7 @@ export default function Terminal({
         push(HELP_LINES.map((text) => ({ text, kind: "output" })));
         break;
       case "about":
-        push([{ text: "Design & engineering studio.", kind: "output" }]);
+        push([{ text: "Independent designer and developer portfolio.", kind: "output" }]);
         break;
       case "whoami":
         push([{ text: "visitor", kind: "output" }]);
