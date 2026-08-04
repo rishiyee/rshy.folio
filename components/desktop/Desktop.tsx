@@ -9,6 +9,7 @@ import BootOverlay from "./BootOverlay";
 import ChatWidget, { type ChatWidgetHandle } from "./ChatWidget";
 import Terminal from "./Terminal";
 import PdfViewer from "./PdfViewer";
+import PdfThumbnail from "./PdfThumbnail";
 import MinimizedDock from "./MinimizedDock";
 import { COMPANY_NAME } from "@/lib/config";
 import {
@@ -28,6 +29,7 @@ const BACKGROUND_COLORS = [
 const BACKGROUND_STORAGE_KEY = "vonnue-os-background-index";
 
 const DOC_PATH = "/case1.pdf";
+const PROJECT_NAME = "Case Study"; // TODO: swap in the real project name
 
 const WINDOW_CONTENT: Record<"about", { title: string; body: string[] }> = {
   about: {
@@ -344,7 +346,7 @@ export default function Desktop() {
                 onOpenCase={() => openWindow("doc")}
               />
             ) : w.id === "works" ? (
-              <>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <button
                   ref={docLauncherRef}
                   type="button"
@@ -354,15 +356,12 @@ export default function Desktop() {
                       toViewportRect(event.currentTarget.getBoundingClientRect())
                     )
                   }
-                  className="block w-full text-left hover:text-accent transition-colors"
+                  className="flex flex-col items-stretch gap-1 border border-line p-1 text-left hover:border-accent hover:text-accent transition-colors"
                 >
-                  case1.pdf   ................  view
+                  <PdfThumbnail src={DOC_PATH} />
+                  <span className="px-1 pb-1">{PROJECT_NAME}</span>
                 </button>
-                <div>case-02   ................  in progress</div>
-                <div>case-03   ................  in progress</div>
-                <div className="h-3" />
-                <div>3 items - updated regularly</div>
-              </>
+              </div>
             ) : w.id === "doc" ? (
               <PdfViewer src={DOC_PATH} />
             ) : (
