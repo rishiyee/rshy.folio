@@ -38,7 +38,7 @@ export default function WindowPanel({
   onToggleMaximize,
   onMinimize,
   onTransitionComplete,
-  windowClassName = "w-[420px] max-w-[calc(100vw-2rem)]",
+  windowClassName = "w-[40vw] h-[calc(22.5vw+37px)] max-w-[calc(100vw-2rem)]",
   contentClassName = "p-4",
   children,
 }: {

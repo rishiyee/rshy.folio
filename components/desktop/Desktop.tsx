@@ -336,18 +336,12 @@ export default function Desktop() {
             onToggleMaximize={() => toggleMaximizeWindow(w.id)}
             onMinimize={() => minimizeWindow(w.id)}
             onTransitionComplete={() => completeWindowTransition(w.id)}
-            windowClassName={
-              w.id === "doc"
-                ? "w-[80vw] h-[calc(45vw+37px)] max-w-[calc(100vw-2rem)]"
-                : undefined
-            }
             contentClassName={w.id === "doc" ? "p-0" : undefined}
           >
             {w.id === "terminal" ? (
               <Terminal
                 onClose={() => closeWindow(w.id)}
                 onOpenCase={() => openWindow("doc")}
-                fillHeight={w.maximized}
               />
             ) : w.id === "works" ? (
               <>

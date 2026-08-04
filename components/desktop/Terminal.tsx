@@ -142,11 +142,9 @@ function getPathCompletions(cwd: string[], input: string, directoriesOnly: boole
 export default function Terminal({
   onClose,
   onOpenCase,
-  fillHeight = false,
 }: {
   onClose: () => void;
   onOpenCase: () => void;
-  fillHeight?: boolean;
 }) {
   const [lines, setLines] = useState<Line[]>([
     { text: `${COMPANY_NAME} OS terminal — type "help" to get started.`, kind: "output" },
@@ -354,7 +352,7 @@ export default function Terminal({
 
   return (
     <div
-      className={`flex flex-col text-xs ${fillHeight ? "h-full" : "h-full sm:h-72"}`}
+      className="flex flex-col text-xs h-full"
       onClick={() => inputRef.current?.focus()}
     >
       <div ref={scrollRef} className="retro-scrollbar flex-1 overflow-y-auto leading-relaxed">
