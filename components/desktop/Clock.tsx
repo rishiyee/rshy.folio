@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
   fractionalSecondDigits: 3,
   hour12: true,
+  timeZoneName: "short",
 });
 
 export default function Clock() {
@@ -21,8 +25,8 @@ export default function Clock() {
   }, []);
 
   return (
-    <span className="text-[10px] sm:text-xs tabular-nums text-foreground select-none">
-      {label ?? "--:--:--.--- --"}
+    <span className="text-[10px] sm:text-xs tabular-nums text-foreground select-none whitespace-nowrap">
+      {label ?? "--- --, ----, --:--:--.--- -- ---"}
     </span>
   );
 }
