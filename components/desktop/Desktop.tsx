@@ -9,6 +9,7 @@ import BootOverlay from "./BootOverlay";
 import ChatWidget, { type ChatWidgetHandle } from "./ChatWidget";
 import Terminal from "./Terminal";
 import NotesApp from "./NotesApp";
+import ContactForm from "./ContactForm";
 import AboutWindow from "./AboutWindow";
 import PdfViewer from "./PdfViewer";
 import PdfThumbnail from "./PdfThumbnail";
@@ -38,10 +39,11 @@ const WINDOW_TITLES = {
   about: "about.txt",
   doc: "case1.pdf",
   notes: "notes.txt",
+  contact: "contact.txt",
 };
 
-type WindowId = "works" | "terminal" | "about" | "doc" | "notes";
-type IconId = "works" | "terminal" | "notes";
+type WindowId = "works" | "terminal" | "about" | "doc" | "notes" | "contact";
+type IconId = "works" | "terminal" | "notes" | "contact";
 type OpenWindow = {
   id: WindowId;
   position: { x: number; y: number };
@@ -57,6 +59,7 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   works: { x: 24, y: 56 },
   terminal: { x: 24, y: 160 },
   notes: { x: 24, y: 264 },
+  contact: { x: 24, y: 368 },
 };
 
 export default function Desktop() {
@@ -151,7 +154,10 @@ export default function Desktop() {
 
   function resolveOriginalTarget(openWindow: OpenWindow) {
     const iconElement =
-      openWindow.id === "works" || openWindow.id === "terminal" || openWindow.id === "notes"
+      openWindow.id === "works" ||
+      openWindow.id === "terminal" ||
+      openWindow.id === "notes" ||
+      openWindow.id === "contact"
         ? iconElements.current[openWindow.id]
         : openWindow.id === "doc"
           ? docLauncherRef.current
@@ -325,6 +331,18 @@ export default function Desktop() {
             else delete iconElements.current.notes;
           }}
         />
+        <DesktopIcon
+          label="Contact"
+          icon="/globe.svg"
+          position={iconPositions.contact}
+          labelTone={iconLabelTone}
+          onMove={(position) => moveIcon("contact", position)}
+          onOpen={(origin) => openWindow("contact", origin)}
+          onElement={(element) => {
+            if (element) iconElements.current.contact = element;
+            else delete iconElements.current.contact;
+          }}
+        />
 
         {windows.filter((w) => !w.minimized).map((w) => (
           <WindowPanel
@@ -377,6 +395,8 @@ export default function Desktop() {
               <AboutWindow />
             ) : w.id === "notes" ? (
               <NotesApp />
+            ) : w.id === "contact" ? (
+              <ContactForm />
             ) : null}
           </WindowPanel>
         ))}
