@@ -17,6 +17,18 @@ import {
 } from "@/lib/windowTransition";
 
 type Position = { x: number; y: number };
+const MENU_BAR_HEIGHT = 36;
+
+function clampToViewport(position: Position, width: number, height: number): Position {
+  return {
+    x: Math.min(Math.max(position.x, 0), Math.max(0, window.innerWidth - width)),
+    y: Math.min(
+      Math.max(position.y, MENU_BAR_HEIGHT),
+      Math.max(MENU_BAR_HEIGHT, window.innerHeight - height)
+    ),
+  };
+}
+
 export type WindowTransitionPhase =
   | "opening"
   | "open"
@@ -184,18 +196,42 @@ export default function WindowPanel({
     return () => animation.cancel();
   }, [fullscreen]);
 
+  useLayoutEffect(() => {
+    const element = panelRef.current;
+    if (!element || fullscreen) return;
+
+    const clampCurrentPosition = () => {
+      const nextPosition = clampToViewport(
+        position,
+        element.offsetWidth,
+        element.offsetHeight
+      );
+      if (nextPosition.x !== position.x || nextPosition.y !== position.y) {
+        onMove(nextPosition);
+      }
+    };
+
+    clampCurrentPosition();
+    window.addEventListener('resize', clampCurrentPosition);
+    return () => window.removeEventListener('resize', clampCurrentPosition);
+  }, [fullscreen, onMove, position]);
+
   useEffect(() => {
     if (!dragging) return;
 
     function onPointerMove(e: globalThis.PointerEvent) {
       const state = dragState.current;
-      if (!state) return;
+      const element = panelRef.current;
+      if (!state || !element) return;
       const nextX = state.originX + (e.clientX - state.startX);
       const nextY = state.originY + (e.clientY - state.startY);
-      onMove({
-        x: Math.min(Math.max(nextX, -320), window.innerWidth - 60),
-        y: Math.min(Math.max(nextY, 0), window.innerHeight - 40),
-      });
+      onMove(
+        clampToViewport(
+          { x: nextX, y: nextY },
+          element.offsetWidth,
+          element.offsetHeight
+        )
+      );
     }
     function onPointerUp() {
       setDragging(false);
@@ -232,7 +268,7 @@ export default function WindowPanel({
   return (
     <div
       ref={panelRef}
-      className={`fixed border border-line bg-background flex flex-col ${
+      className={`fixed max-h-[calc(100vh-3rem)] border border-line bg-background flex flex-col ${
         transitionLocked ? "pointer-events-none" : ""
       } ${fullscreen ? "inset-x-3 top-12 bottom-3" : windowClassName}`}
       style={fullscreen ? { zIndex } : { left: position.x, top: position.y, zIndex }}
@@ -241,11 +277,12 @@ export default function WindowPanel({
       <div
         className="flex items-center justify-between border-b border-line px-3 py-2 select-none"
         onPointerDown={startDrag}
+        onDoubleClick={toggleMaximizeAnimated}
       >
         <span className="text-xs tracking-[0.1em] uppercase text-foreground/90">
           {title}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" onDoubleClick={(event) => event.stopPropagation()}>
           <button
             type="button"
             onClick={onMinimize}

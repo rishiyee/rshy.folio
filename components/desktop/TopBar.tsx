@@ -66,7 +66,7 @@ export default function TopBar({
 
   return (
     <div className="fixed top-0 inset-x-0 h-9 z-[10000] flex items-stretch justify-between bg-background border-b border-line text-foreground">
-      <div className="flex items-stretch">
+      <div className="flex min-w-0 flex-1 items-stretch">
         <LogoMenu
           onShutdown={onShutdown}
           onOpenAbout={onOpenAbout}
@@ -123,7 +123,7 @@ export default function TopBar({
         />
       </div>
 
-      <div className="flex items-center px-2 sm:px-4 h-full">
+      <div className="flex shrink-0 items-center px-2 sm:px-4 h-full">
         <Clock />
       </div>
     </div>

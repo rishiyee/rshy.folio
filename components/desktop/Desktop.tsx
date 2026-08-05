@@ -59,8 +59,8 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   works: { x: 24, y: 56 },
   terminal: { x: 24, y: 160 },
   notes: { x: 24, y: 264 },
-  contact: { x: 24, y: 368 },
-  about: { x: 24, y: 472 },
+  contact: { x: 24, y: 264 },
+  about: { x: 24, y: 368 },
 };
 
 export default function Desktop() {
@@ -79,7 +79,8 @@ export default function Desktop() {
   useEffect(() => {
     const stored = Number(window.localStorage.getItem(BACKGROUND_STORAGE_KEY));
     if (Number.isInteger(stored) && stored >= 0 && stored < BACKGROUND_COLORS.length) {
-      setBackgroundIndex(stored);
+      const frame = requestAnimationFrame(() => setBackgroundIndex(stored));
+      return () => cancelAnimationFrame(frame);
     }
   }, []);
 
@@ -117,10 +118,20 @@ export default function Desktop() {
       }
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
+      const defaultWidth = Math.min(viewportWidth * 0.4, viewportWidth - 32);
       const windowWidth =
-        id === "doc" ? viewportWidth * 0.8 : Math.min(420, viewportWidth - 32);
-      const windowHeight =
-        id === "doc" ? windowWidth * (9 / 16) + 37 : Math.min(260, viewportHeight - 64);
+        id === "about"
+          ? Math.min(880, viewportWidth - 32)
+          : id === "contact"
+            ? Math.min(820, viewportWidth - 32)
+            : defaultWidth;
+      const requestedHeight =
+        id === "about"
+          ? 650
+          : id === "contact"
+            ? 610
+            : viewportWidth * 0.225 + 37;
+      const windowHeight = Math.min(requestedHeight, viewportHeight - 48);
       const visibleWindowCount = prev.filter((window) => !window.minimized).length;
       const offsets = [
         { x: 0, y: 0 },
@@ -131,12 +142,12 @@ export default function Desktop() {
       ];
       const offset = offsets[visibleWindowCount % offsets.length];
       const x = Math.min(
-        Math.max((viewportWidth - windowWidth) / 2 + offset.x, 16),
-        Math.max(16, viewportWidth - windowWidth - 16)
+        Math.max((viewportWidth - windowWidth) / 2 + offset.x, 0),
+        Math.max(0, viewportWidth - windowWidth)
       );
       const y = Math.min(
-        Math.max((viewportHeight - windowHeight) / 2 + offset.y, 48),
-        Math.max(48, viewportHeight - windowHeight - 16)
+        Math.max((viewportHeight - windowHeight) / 2 + offset.y, 36),
+        Math.max(36, viewportHeight - windowHeight)
       );
       return [
         ...prev,

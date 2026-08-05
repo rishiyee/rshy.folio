@@ -25,12 +25,17 @@ export default function ShutdownOverlay({
   const [lineCount, setLineCount] = useState(0);
 
   useEffect(() => {
-    if (active) setPhase("closing");
+    if (!active) return;
+    const frame = requestAnimationFrame(() => setPhase("closing"));
+    return () => cancelAnimationFrame(frame);
   }, [active]);
 
   useEffect(() => {
     if (phase !== "black") return;
-    const wake = () => setPhase("booting");
+    const wake = () => {
+      setLineCount(0);
+      setPhase("booting");
+    };
     window.addEventListener("pointerdown", wake);
     window.addEventListener("keydown", wake);
     return () => {
@@ -41,7 +46,6 @@ export default function ShutdownOverlay({
 
   useEffect(() => {
     if (phase !== "booting") return;
-    setLineCount(0);
     let i = 0;
     const id = setInterval(() => {
       i += 1;
