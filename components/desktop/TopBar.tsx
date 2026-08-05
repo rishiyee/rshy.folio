@@ -11,12 +11,16 @@ export default function TopBar({
   onReportBug,
   onShutdown,
   onChangeBackground,
+  theme,
+  onToggleTheme,
 }: {
   onOpenWindow: (id: "works" | "terminal") => void;
   onOpenAbout: () => void;
   onReportBug: () => void;
   onShutdown: () => void;
   onChangeBackground: () => void;
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -107,6 +111,10 @@ export default function TopBar({
               onClick: toggleFullscreen,
             },
             { label: "Change Background", onClick: onChangeBackground },
+            {
+              label: theme === "dark" ? "Use Light Mode" : "Use Dark Mode",
+              onClick: onToggleTheme,
+            },
           ]}
           open={activeMenu === "view"}
           hoverActivate={activeMenu !== null}

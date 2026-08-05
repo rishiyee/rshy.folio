@@ -64,15 +64,15 @@ export default function ShutdownOverlay({
   if (phase === "idle") return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black overflow-hidden">
+    <div className="fixed inset-0 z-[20000] bg-black text-neutral-300 overflow-hidden">
       {phase === "closing" && (
         <div
-          className="absolute inset-0 bg-foreground crt-off"
+          className="absolute inset-0 bg-neutral-200 crt-off"
           onAnimationEnd={() => setPhase("black")}
         />
       )}
       {phase === "booting" && (
-        <div className="fade-in p-8 text-sm sm:text-base text-foreground/80 leading-relaxed">
+        <div className="fade-in p-8 text-sm sm:text-base text-neutral-300 leading-relaxed">
           {BOOT_LINES.slice(0, lineCount).map((line, idx) => (
             <div key={idx}>{line}</div>
           ))}

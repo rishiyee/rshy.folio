@@ -29,6 +29,8 @@ const BACKGROUND_COLORS = [
 ];
 
 const BACKGROUND_STORAGE_KEY = "portfolio-os-background-index";
+const THEME_STORAGE_KEY = "portfolio-os-theme";
+type Theme = "dark" | "light";
 
 const DOC_PATH = "/case1.pdf";
 const PROJECT_NAME = "Case Study"; // TODO: swap in the real project name
@@ -68,6 +70,7 @@ export default function Desktop() {
   const [shutdownActive, setShutdownActive] = useState(false);
   const [desktopCycle, setDesktopCycle] = useState(0);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [theme, setTheme] = useState<Theme>("dark");
   const [windows, setWindows] = useState<OpenWindow[]>([]);
   const [iconPositions, setIconPositions] = useState(DEFAULT_ICON_POSITIONS);
   const iconLabelTone = backgroundIndex === 1 || backgroundIndex === 2 ? "light" : "dark";
@@ -83,6 +86,18 @@ export default function Desktop() {
       return () => cancelAnimationFrame(frame);
     }
   }, []);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored !== "dark" && stored !== "light") return;
+    const frame = requestAnimationFrame(() => setTheme(stored));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   function changeBackground() {
     setBackgroundIndex((i) => {
@@ -306,6 +321,8 @@ export default function Desktop() {
           onReportBug={reportBug}
           onShutdown={() => setShutdownActive(true)}
           onChangeBackground={changeBackground}
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
         />
 
         <DesktopIcon
