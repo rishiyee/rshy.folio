@@ -11,12 +11,16 @@ export default function TopBar({
   onReportBug,
   onShutdown,
   onChangeBackground,
+  theme,
+  onToggleTheme,
 }: {
   onOpenWindow: (id: "works" | "terminal") => void;
   onOpenAbout: () => void;
   onReportBug: () => void;
   onShutdown: () => void;
   onChangeBackground: () => void;
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -66,7 +70,7 @@ export default function TopBar({
 
   return (
     <div className="fixed top-0 inset-x-0 h-9 z-[10000] flex items-stretch justify-between bg-background border-b border-line text-foreground">
-      <div className="flex items-stretch">
+      <div className="flex min-w-0 flex-1 items-stretch">
         <LogoMenu
           onShutdown={onShutdown}
           onOpenAbout={onOpenAbout}
@@ -107,6 +111,10 @@ export default function TopBar({
               onClick: toggleFullscreen,
             },
             { label: "Change Background", onClick: onChangeBackground },
+            {
+              label: theme === "dark" ? "Use Light Mode" : "Use Dark Mode",
+              onClick: onToggleTheme,
+            },
           ]}
           open={activeMenu === "view"}
           hoverActivate={activeMenu !== null}
@@ -123,7 +131,7 @@ export default function TopBar({
         />
       </div>
 
-      <div className="flex items-center px-2 sm:px-4 h-full">
+      <div className="flex shrink-0 items-center px-2 sm:px-4 h-full">
         <Clock />
       </div>
     </div>

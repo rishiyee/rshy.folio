@@ -19,13 +19,8 @@ type Typing = { text: string; revealed: number };
 
 export type ChatWidgetHandle = { openWithMessage: (text: string) => void };
 
-const INITIAL_GREETING = "Hey — thanks for stopping by. Leave a message and we'll get back to you.";
-
-const AUTO_REPLIES = [
-  "Noted — we'll get back to you soon.",
-  "Message received. Thanks for reaching out.",
-  "Got it. We'll follow up shortly.",
-];
+const INITIAL_GREETING =
+  "Hi — I'm Hrishikesh's AI portfolio assistant. Ask me about his skills, experience, work, or contact details.";
 
 const TYPE_SPEED_MS = 28;
 
@@ -35,6 +30,7 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
   const [messages, setMessages] = useState<Message[]>([]);
   const [typing, setTyping] = useState<Typing | null>(null);
   const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -160,14 +156,26 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
       .catch(() => {});
   }
 
-  function send() {
+  async function send() {
     const text = draft.trim();
-    if (!text) return;
-    setMessages((prev) => [...prev, { from: "user", text }]);
+    if (!text || sending || typing) return;
+    const nextMessages: Message[] = [...messages, { from: "user", text }];
+    setMessages(nextMessages);
     setDraft("");
-    // TODO: wire real delivery through Resend once an API key exists
-    const reply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
-    setTimeout(() => queueSystemMessage(reply), 500);
+    setSending(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: nextMessages }),
+      });
+      const data = (await response.json()) as { reply?: string; error?: string };
+      queueSystemMessage(data.reply || data.error || "The AI assistant is unavailable.");
+    } catch {
+      queueSystemMessage("I couldn't reach the AI assistant. Please try again shortly.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -176,7 +184,7 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
         <div ref={panelRef} className={`w-80 max-w-[calc(100vw-2rem)] border border-line bg-background flex flex-col ${closing ? "pointer-events-none" : ""}`}>
           <div className="flex items-center justify-between border-b border-line px-3 py-2">
             <span className="text-xs tracking-[0.1em] uppercase text-foreground/90">
-              Chat
+              AI Assistant
             </span>
             <button
               type="button"
@@ -210,6 +218,11 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
                 <span className="cursor-blink">█</span>
               </div>
             )}
+            {sending && !typing && (
+              <div className="self-start border border-line px-2 py-1.5 text-dim">
+                Thinking<span className="cursor-blink">_</span>
+              </div>
+            )}
           </div>
 
           <form
@@ -223,11 +236,13 @@ const ChatWidget = forwardRef<ChatWidgetHandle>(function ChatWidget(_props, ref)
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-transparent px-3 py-2 text-xs text-foreground outline-none placeholder:text-dimmer"
+              disabled={sending}
+              className="flex-1 bg-transparent px-3 py-2 text-base sm:text-xs text-foreground outline-none placeholder:text-dimmer disabled:opacity-50"
             />
             <button
               type="submit"
-              className="px-3 text-xs text-dim hover:text-accent transition-colors border-l border-line"
+              disabled={sending || Boolean(typing) || !draft.trim()}
+              className="px-3 text-xs text-dim hover:text-accent transition-colors border-l border-line disabled:opacity-40"
             >
               Send
             </button>

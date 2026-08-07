@@ -1,7 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Dropdown from "./Dropdown";
 import { SOCIAL_LINKS } from "@/lib/config";
+
+type SocialKey = "behance" | "dribbble" | "linkedin" | "instagram" | "email";
+
+function safeSocialUrl(value: string) {
+  if (!value) return "#";
+  if (/^(https?:\/\/|mailto:)/i.test(value)) return value;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return `mailto:${value}`;
+  return "#";
+}
 
 function LogoMark() {
   return (
@@ -29,12 +39,46 @@ export default function LogoMenu({
   onOpen: () => void;
   onClose: () => void;
 }) {
+  const [socialLinks, setSocialLinks] = useState<Record<SocialKey, string>>({
+    behance: SOCIAL_LINKS.behance,
+    dribbble: SOCIAL_LINKS.dribbble,
+    linkedin: SOCIAL_LINKS.linkedin,
+    instagram: SOCIAL_LINKS.instagram,
+    email: SOCIAL_LINKS.email,
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/about.md", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load about.md");
+        return response.text();
+      })
+      .then((markdown) => {
+        setSocialLinks((current) => {
+          const next = { ...current };
+          for (const line of markdown.split(/\r?\n/)) {
+            const match = line.match(/^-\s+([^:]+):\s*(.*)$/);
+            const key = match?.[1].trim().toLowerCase() as SocialKey | undefined;
+            if (key && key in next) next[key] = match?.[2].trim() ?? "";
+          }
+          return next;
+        });
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.error(error);
+        }
+      });
+    return () => controller.abort();
+  }, []);
+
   const links: { label: string; href?: string; onClick?: () => void }[] = [
-    { label: "Behance", href: SOCIAL_LINKS.behance || "#" },
-    { label: "Dribbble", href: SOCIAL_LINKS.dribbble || "#" },
-    { label: "LinkedIn", href: SOCIAL_LINKS.linkedin || "#" },
-    { label: "Instagram", href: SOCIAL_LINKS.instagram || "#" },
-    { label: "Email", href: SOCIAL_LINKS.email || "#" },
+    { label: "Behance", href: safeSocialUrl(socialLinks.behance) },
+    { label: "Dribbble", href: safeSocialUrl(socialLinks.dribbble) },
+    { label: "LinkedIn", href: safeSocialUrl(socialLinks.linkedin) },
+    { label: "Instagram", href: safeSocialUrl(socialLinks.instagram) },
+    { label: "Email", href: safeSocialUrl(socialLinks.email) },
   ];
 
   return (

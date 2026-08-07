@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   --background: rgb(10, 10, 10);
   --foreground: rgb(228, 228, 228);
   --dim: rgb(110, 110, 110);
@@ -8,6 +9,17 @@
   --line: rgb(35, 35, 35);
   --accent: rgb(227, 163, 53);
   --accent-dim: rgb(122, 90, 31);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: rgb(245, 245, 242);
+  --foreground: rgb(18, 18, 18);
+  --dim: rgb(92, 92, 88);
+  --dimmer: rgb(145, 145, 138);
+  --line: rgb(194, 194, 186);
+  --accent: rgb(0, 74, 222);
+  --accent-dim: rgb(111, 145, 209);
 }
 
 @theme inline {

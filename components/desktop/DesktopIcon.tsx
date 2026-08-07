@@ -107,6 +107,7 @@ export default function DesktopIcon({
       return;
     }
     setSelected(true);
+    triggerOpen();
   }
 
   return (
@@ -119,7 +120,6 @@ export default function DesktopIcon({
       onPointerDown={startDrag}
       onClick={handleClick}
       onBlur={() => setSelected(false)}
-      onDoubleClick={triggerOpen}
       onKeyDown={(e) => {
         if (e.key === "Enter") triggerOpen();
       }}

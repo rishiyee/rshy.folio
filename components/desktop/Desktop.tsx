@@ -30,6 +30,8 @@ const BACKGROUND_COLORS = [
 ];
 
 const BACKGROUND_STORAGE_KEY = "portfolio-os-background-index";
+const THEME_STORAGE_KEY = "portfolio-os-theme";
+type Theme = "dark" | "light";
 
 const DOC_PATH = "/case1.pdf";
 const PROJECT_NAME = "Case Study"; // TODO: swap in the real project name
@@ -60,8 +62,8 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   works: { x: 24, y: 56 },
   terminal: { x: 24, y: 160 },
   notes: { x: 24, y: 264 },
-  contact: { x: 24, y: 368 },
-  about: { x: 24, y: 472 },
+  contact: { x: 24, y: 264 },
+  about: { x: 24, y: 368 },
 };
 
 export default function Desktop() {
@@ -69,6 +71,7 @@ export default function Desktop() {
   const [shutdownActive, setShutdownActive] = useState(false);
   const [desktopCycle, setDesktopCycle] = useState(0);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [theme, setTheme] = useState<Theme>("dark");
   const [windows, setWindows] = useState<OpenWindow[]>([]);
   const [iconPositions, setIconPositions] = useState(DEFAULT_ICON_POSITIONS);
   const iconLabelTone = backgroundIndex === 1 || backgroundIndex === 2 ? "light" : "dark";
@@ -80,9 +83,22 @@ export default function Desktop() {
   useEffect(() => {
     const stored = Number(window.localStorage.getItem(BACKGROUND_STORAGE_KEY));
     if (Number.isInteger(stored) && stored >= 0 && stored < BACKGROUND_COLORS.length) {
-      setBackgroundIndex(stored);
+      const frame = requestAnimationFrame(() => setBackgroundIndex(stored));
+      return () => cancelAnimationFrame(frame);
     }
   }, []);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored !== "dark" && stored !== "light") return;
+    const frame = requestAnimationFrame(() => setTheme(stored));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   function changeBackground() {
     setBackgroundIndex((i) => {
@@ -118,10 +134,20 @@ export default function Desktop() {
       }
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
+      const defaultWidth = Math.min(viewportWidth * 0.4, viewportWidth - 32);
       const windowWidth =
-        id === "doc" ? viewportWidth * 0.8 : Math.min(420, viewportWidth - 32);
-      const windowHeight =
-        id === "doc" ? windowWidth * (9 / 16) + 37 : Math.min(260, viewportHeight - 64);
+        id === "about"
+          ? Math.min(880, viewportWidth - 32)
+          : id === "contact"
+            ? Math.min(820, viewportWidth - 32)
+            : defaultWidth;
+      const requestedHeight =
+        id === "about"
+          ? 650
+          : id === "contact"
+            ? 610
+            : viewportWidth * 0.225 + 37;
+      const windowHeight = Math.min(requestedHeight, viewportHeight - 48);
       const visibleWindowCount = prev.filter((window) => !window.minimized).length;
       const offsets = [
         { x: 0, y: 0 },
@@ -132,12 +158,12 @@ export default function Desktop() {
       ];
       const offset = offsets[visibleWindowCount % offsets.length];
       const x = Math.min(
-        Math.max((viewportWidth - windowWidth) / 2 + offset.x, 16),
-        Math.max(16, viewportWidth - windowWidth - 16)
+        Math.max((viewportWidth - windowWidth) / 2 + offset.x, 0),
+        Math.max(0, viewportWidth - windowWidth)
       );
       const y = Math.min(
-        Math.max((viewportHeight - windowHeight) / 2 + offset.y, 48),
-        Math.max(48, viewportHeight - windowHeight - 16)
+        Math.max((viewportHeight - windowHeight) / 2 + offset.y, 36),
+        Math.max(36, viewportHeight - windowHeight)
       );
       return [
         ...prev,
@@ -296,6 +322,8 @@ export default function Desktop() {
           onReportBug={reportBug}
           onShutdown={() => setShutdownActive(true)}
           onChangeBackground={changeBackground}
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
         />
 
         <DesktopIcon

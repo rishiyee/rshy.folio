@@ -44,7 +44,7 @@ export default function BootOverlay({ onComplete }: { onComplete: () => void }) 
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] bg-black p-8 text-sm sm:text-base text-foreground/80 leading-relaxed transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[20000] bg-black p-8 text-sm sm:text-base text-neutral-300 leading-relaxed transition-opacity duration-300 ${
         fading ? "opacity-0" : "opacity-100"
       }`}
     >
