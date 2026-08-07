@@ -6,6 +6,7 @@ import DesktopIcon, { type IconOrigin } from "./DesktopIcon";
 import WindowPanel, { type WindowTransitionPhase } from "./WindowPanel";
 import ShutdownOverlay from "./ShutdownOverlay";
 import BootOverlay from "./BootOverlay";
+import GrainOverlay from "./GrainOverlay";
 import ChatWidget, { type ChatWidgetHandle } from "./ChatWidget";
 import Terminal from "./Terminal";
 import NotesApp from "./NotesApp";
@@ -462,6 +463,7 @@ export default function Desktop() {
       />
 
       {!booted && <BootOverlay onComplete={() => setBooted(true)} />}
+      {!booted && <GrainOverlay />}
     </div>
   );
 }
