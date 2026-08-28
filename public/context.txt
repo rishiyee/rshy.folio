@@ -3,6 +3,7 @@ PORTFOLIO ASSISTANT KNOWLEDGE BASE
 Name: Hrishikesh Vyshnav
 Role: Designer and Developer
 Practice: Independent designer and developer
+Availability: Available for full-time design, frontend, and creative development roles
 
 Profile:
 Hrishikesh designs and builds brands, products, and digital experiences with equal attention to form and function. He turns early ideas into focused systems and expressive digital experiences. His approach is curious, collaborative, and grounded in details.

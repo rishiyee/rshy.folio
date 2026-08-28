@@ -7,7 +7,7 @@ import WindowPanel, { type WindowTransitionPhase } from "./WindowPanel";
 import ShutdownOverlay from "./ShutdownOverlay";
 import BootOverlay from "./BootOverlay";
 import GrainOverlay from "./GrainOverlay";
-import ChatWidget, { type ChatWidgetHandle } from "./ChatWidget";
+import ChatApp from "./ChatApp";
 import Terminal from "./Terminal";
 import NotesApp from "./NotesApp";
 import ContactForm from "./ContactForm";
@@ -16,26 +16,26 @@ import PdfViewer from "./PdfViewer";
 import PdfThumbnail from "./PdfThumbnail";
 import MinimizedDock from "./MinimizedDock";
 import WordleGame from "./WordleGame";
+import BackgroundPicker, { BACKGROUNDS } from "./BackgroundPicker";
 import {
   pointTarget,
   toViewportRect,
   type ViewportRect,
 } from "@/lib/windowTransition";
 
-const BACKGROUND_COLORS = [
-  "rgb(227, 200, 40)", // yellow
-  "rgb(139, 0, 0)", // dark red
-  "rgb(0, 0, 0)", // black
-  "rgb(251, 0, 236)", // FB00EC
-  "rgb(255, 242, 0)", // FFF200
-];
-
 const BACKGROUND_STORAGE_KEY = "portfolio-os-background-index";
 const THEME_STORAGE_KEY = "portfolio-os-theme";
 type Theme = "dark" | "light";
 
 const DOC_PATH = "/case1.pdf";
-const PROJECT_NAME = "Case Study"; // TODO: swap in the real project name
+const PROJECTS = [
+  { title: "Selected Work 01", discipline: "Product / Interface", color: "#e3c828", src: DOC_PATH },
+  { title: "Selected Work 02", discipline: "Brand System", color: "#8b0000" },
+  { title: "Selected Work 03", discipline: "Digital Experience", color: "#000000" },
+  { title: "Selected Work 04", discipline: "Creative Development", color: "#fb00ec" },
+  { title: "Selected Work 05", discipline: "Prototype / Interaction", color: "#fff200" },
+] as const;
+const GUIDE_STORAGE_KEY = "portfolio-os-guide-seen";
 
 const WINDOW_TITLES = {
   works: "/works",
@@ -45,10 +45,12 @@ const WINDOW_TITLES = {
   notes: "notes.txt",
   contact: "contact.txt",
   wordle: "wordle.app",
+  background: "desktop-backgrounds.app",
+  chat: "assistant.app",
 };
 
-type WindowId = "works" | "terminal" | "about" | "doc" | "notes" | "contact" | "wordle";
-type IconId = "works" | "terminal" | "notes" | "contact" | "about" | "wordle";
+type WindowId = "works" | "terminal" | "about" | "doc" | "notes" | "contact" | "wordle" | "background" | "chat";
+type IconId = "works" | "terminal" | "notes" | "contact" | "about" | "wordle" | "chat";
 type OpenWindow = {
   id: WindowId;
   position: { x: number; y: number };
@@ -67,10 +69,14 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   contact: { x: 24, y: 264 },
   about: { x: 24, y: 368 },
   wordle: { x: 120, y: 56 },
+  chat: { x: 120, y: 160 },
 };
 
 export default function Desktop() {
   const [booted, setBooted] = useState(false);
+  const [entryReady, setEntryReady] = useState(false);
+  const [chatPrompt, setChatPrompt] = useState<{ id: number; text: string }>();
+  const [showGuide, setShowGuide] = useState(false);
   const [shutdownActive, setShutdownActive] = useState(false);
   const [desktopCycle, setDesktopCycle] = useState(0);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
@@ -79,13 +85,13 @@ export default function Desktop() {
   const [iconPositions, setIconPositions] = useState(DEFAULT_ICON_POSITIONS);
   const iconLabelTone = backgroundIndex === 1 || backgroundIndex === 2 ? "light" : "dark";
   const topZ = useRef(50);
-  const chatRef = useRef<ChatWidgetHandle>(null);
+  const chatPromptId = useRef(0);
   const iconElements = useRef<Partial<Record<IconId, HTMLButtonElement>>>({});
   const docLauncherRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const stored = Number(window.localStorage.getItem(BACKGROUND_STORAGE_KEY));
-    if (Number.isInteger(stored) && stored >= 0 && stored < BACKGROUND_COLORS.length) {
+    if (Number.isInteger(stored) && stored >= 0 && stored < BACKGROUNDS.length) {
       const frame = requestAnimationFrame(() => setBackgroundIndex(stored));
       return () => cancelAnimationFrame(frame);
     }
@@ -103,12 +109,27 @@ export default function Desktop() {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  function changeBackground() {
-    setBackgroundIndex((i) => {
-      const next = (i + 1) % BACKGROUND_COLORS.length;
-      window.localStorage.setItem(BACKGROUND_STORAGE_KEY, String(next));
-      return next;
-    });
+  useEffect(() => {
+    if (!booted) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setEntryReady(true), reduceMotion ? 50 : 1050);
+    return () => window.clearTimeout(timer);
+  }, [booted]);
+
+  useEffect(() => {
+    if (!entryReady || window.localStorage.getItem(GUIDE_STORAGE_KEY)) return;
+    const timer = window.setTimeout(() => setShowGuide(true), 250);
+    return () => window.clearTimeout(timer);
+  }, [entryReady]);
+
+  function dismissGuide() {
+    setShowGuide(false);
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, "true");
+  }
+
+  function selectBackground(index: number) {
+    setBackgroundIndex(index);
+    window.localStorage.setItem(BACKGROUND_STORAGE_KEY, String(index));
   }
 
   function nextZ() {
@@ -149,6 +170,10 @@ export default function Desktop() {
           ? 650
           : id === "contact"
             ? 610
+            : id === "background"
+              ? 430
+              : id === "chat"
+                ? 560
             : viewportWidth * 0.225 + 37;
       const windowHeight = Math.min(requestedHeight, viewportHeight - 48);
       const visibleWindowCount = prev.filter((window) => !window.minimized).length;
@@ -191,6 +216,7 @@ export default function Desktop() {
       openWindow.id === "contact" ||
       openWindow.id === "about"
           || openWindow.id === "wordle"
+          || openWindow.id === "chat"
         ? iconElements.current[openWindow.id]
         : openWindow.id === "doc"
           ? docLauncherRef.current
@@ -306,31 +332,41 @@ export default function Desktop() {
   }
 
   function reportBug() {
-    chatRef.current?.openWithMessage(
-      "Found a bug? Describe it below and we'll take a look."
-    );
+    chatPromptId.current += 1;
+    setChatPrompt({
+      id: chatPromptId.current,
+      text: "Found a bug? Describe it below and we'll take a look.",
+    });
+    openWindow("chat");
   }
 
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: BACKGROUND_COLORS[backgroundIndex] }}
+      style={{ backgroundColor: BACKGROUNDS[backgroundIndex].color }}
     >
       <div
         key={`${booted}-${desktopCycle}`}
-        className={`fixed inset-0 ${booted ? "crt-on" : "opacity-0"}`}
+        aria-busy={booted && !entryReady}
+        className={`fixed inset-0 ${
+          booted
+            ? `crt-on ${entryReady ? "" : "desktop-entering pointer-events-none"}`
+            : "opacity-0"
+        }`}
       >
+        {!entryReady && <div aria-hidden="true" className="desktop-entry-signal" />}
         <TopBar
           onOpenWindow={openWindow}
           onOpenAbout={() => openWindow("about")}
           onReportBug={reportBug}
           onShutdown={() => setShutdownActive(true)}
-          onChangeBackground={changeBackground}
+          onChangeBackground={() => openWindow("background")}
           theme={theme}
           onToggleTheme={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
         />
 
         <DesktopIcon
+          entryIndex={0}
           label="Works"
           icon="/files.svg"
           position={iconPositions.works}
@@ -343,6 +379,7 @@ export default function Desktop() {
           }}
         />
         <DesktopIcon
+          entryIndex={1}
           label="Wordle"
           icon="/wordle.svg"
           position={iconPositions.wordle}
@@ -355,6 +392,7 @@ export default function Desktop() {
           }}
         />
         <DesktopIcon
+          entryIndex={2}
           label="Terminal"
           icon="/terminal.svg"
           position={iconPositions.terminal}
@@ -367,6 +405,7 @@ export default function Desktop() {
           }}
         />
         <DesktopIcon
+          entryIndex={3}
           label="Contact"
           icon="/contact.svg"
           position={iconPositions.contact}
@@ -379,6 +418,7 @@ export default function Desktop() {
           }}
         />
         <DesktopIcon
+          entryIndex={4}
           label="About"
           icon="/window.svg"
           position={iconPositions.about}
@@ -388,6 +428,19 @@ export default function Desktop() {
           onElement={(element) => {
             if (element) iconElements.current.about = element;
             else delete iconElements.current.about;
+          }}
+        />
+        <DesktopIcon
+          entryIndex={5}
+          label="Chat"
+          icon="/chat.svg"
+          position={iconPositions.chat}
+          labelTone={iconLabelTone}
+          onMove={(position) => moveIcon("chat", position)}
+          onOpen={(origin) => openWindow("chat", origin)}
+          onElement={(element) => {
+            if (element) iconElements.current.chat = element;
+            else delete iconElements.current.chat;
           }}
         />
 
@@ -414,11 +467,15 @@ export default function Desktop() {
                   ? "w-[min(820px,calc(100vw-2rem))] h-[min(610px,calc(100vh-5rem))]"
                   : w.id === "wordle"
                     ? "w-[min(500px,calc(100vw-2rem))] h-[min(680px,calc(100vh-5rem))]"
+                    : w.id === "background"
+                      ? "w-[min(560px,calc(100vw-2rem))] h-[min(430px,calc(100vh-5rem))]"
+                      : w.id === "chat"
+                        ? "w-[min(460px,calc(100vw-2rem))] h-[min(560px,calc(100vh-5rem))]"
                   : undefined
             }
             contentClassName={
               w.id === "doc" || w.id === "about" || w.id === "contact"
-                || w.id === "wordle"
+                || w.id === "wordle" || w.id === "chat"
                 ? "p-0"
                 : undefined
             }
@@ -430,20 +487,38 @@ export default function Desktop() {
               />
             ) : w.id === "works" ? (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <button
-                  ref={docLauncherRef}
-                  type="button"
-                  onClick={(event) =>
-                    openWindow(
-                      "doc",
-                      toViewportRect(event.currentTarget.getBoundingClientRect())
-                    )
-                  }
-                  className="flex flex-col items-stretch gap-1 border border-line p-1 text-left hover:border-accent hover:text-accent transition-colors"
-                >
-                  <PdfThumbnail src={DOC_PATH} />
-                  <span className="px-1 pb-1">{PROJECT_NAME}</span>
-                </button>
+                {PROJECTS.map((project, index) => {
+                  const projectSrc = "src" in project ? project.src : undefined;
+                  const available = Boolean(projectSrc);
+                  return (
+                    <button
+                      key={project.title}
+                      ref={index === 0 ? docLauncherRef : undefined}
+                      type="button"
+                      disabled={!available}
+                      onClick={(event) => {
+                        if (!available) return;
+                        openWindow(
+                          "doc",
+                          toViewportRect(event.currentTarget.getBoundingClientRect())
+                        );
+                      }}
+                      className="group flex flex-col items-stretch border border-line p-1 text-left transition-colors hover:border-accent hover:text-accent disabled:cursor-default disabled:hover:border-line disabled:hover:text-foreground"
+                    >
+                      {projectSrc ? (
+                        <PdfThumbnail src={projectSrc} />
+                      ) : (
+                        <span className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border border-line" style={{ backgroundColor: project.color }}>
+                          <span className="bg-black/75 px-2 py-1 text-[9px] uppercase tracking-[0.1em] text-white">
+                            Details pending
+                          </span>
+                        </span>
+                      )}
+                      <span className="px-1 pt-1 text-[10px] font-bold uppercase tracking-[0.06em]">{project.title}</span>
+                      <span className="px-1 pb-1 text-[9px] text-dim">{project.discipline}</span>
+                    </button>
+                  );
+                })}
               </div>
             ) : w.id === "doc" ? (
               <PdfViewer src={DOC_PATH} />
@@ -455,6 +530,10 @@ export default function Desktop() {
               <ContactForm />
             ) : w.id === "wordle" ? (
               <WordleGame />
+            ) : w.id === "background" ? (
+              <BackgroundPicker selectedIndex={backgroundIndex} onSelect={selectBackground} />
+            ) : w.id === "chat" ? (
+              <ChatApp prompt={chatPrompt} />
             ) : null}
           </WindowPanel>
         ))}
@@ -500,7 +579,24 @@ export default function Desktop() {
             }
           />
         )}
-        <ChatWidget ref={chatRef} />
+
+        {showGuide && (
+          <aside className="fixed bottom-4 left-4 z-[15000] w-[min(310px,calc(100vw-2rem))] border border-line bg-background p-4 text-foreground shadow-2xl" aria-label="Getting started">
+            <button type="button" onClick={dismissGuide} aria-label="Dismiss guide" className="absolute right-2 top-2 text-dim hover:text-accent">×</button>
+            <p className="text-[9px] uppercase tracking-[0.16em] text-accent">New here?</p>
+            <p className="mt-2 text-xs leading-5 text-dim">Start with selected projects, then explore About or open the AI assistant.</p>
+            <button
+              type="button"
+              onClick={() => {
+                dismissGuide();
+                openWindow("works");
+              }}
+              className="mt-3 border border-accent px-3 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-accent hover:bg-accent hover:text-background"
+            >
+              Open Works →
+            </button>
+          </aside>
+        )}
       </div>
 
       <ShutdownOverlay

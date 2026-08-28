@@ -13,6 +13,7 @@ export default function DesktopIcon({
   onMove,
   onOpen,
   onElement,
+  entryIndex,
   labelTone = "dark",
 }: {
   label: string;
@@ -21,6 +22,7 @@ export default function DesktopIcon({
   onMove: (position: IconPosition) => void;
   onOpen: (origin: IconOrigin) => void;
   onElement?: (element: HTMLButtonElement | null) => void;
+  entryIndex?: number;
   labelTone?: "light" | "dark";
 }) {
   const [selected, setSelected] = useState(false);
@@ -117,6 +119,7 @@ export default function DesktopIcon({
         onElement?.(element);
       }}
       type="button"
+      data-entry-index={entryIndex}
       onPointerDown={startDrag}
       onClick={handleClick}
       onBlur={() => setSelected(false)}
@@ -124,7 +127,7 @@ export default function DesktopIcon({
         if (e.key === "Enter") triggerOpen();
       }}
       style={{ left: position.x, top: position.y }}
-      className={`fixed flex flex-col items-center gap-1.5 w-20 px-1 py-2 text-center outline-none select-none touch-none transition-colors ${
+      className={`desktop-entry-icon fixed flex flex-col items-center gap-1.5 w-20 px-1 py-2 text-center outline-none select-none touch-none transition-colors ${
         labelTone === "light"
           ? "text-white hover:bg-white/15 active:bg-white/25 focus-visible:bg-white/20"
           : "text-black hover:bg-black/10 active:bg-black/20 focus-visible:bg-black/15"

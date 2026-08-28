@@ -69,7 +69,7 @@ export default function TopBar({
   }
 
   return (
-    <div className="fixed top-0 inset-x-0 h-9 z-[10000] flex items-stretch justify-between bg-background border-b border-line text-foreground">
+    <div className="desktop-entry-topbar fixed top-0 inset-x-0 h-9 z-[10000] flex items-stretch justify-between bg-background border-b border-line text-foreground">
       <div className="flex min-w-0 flex-1 items-stretch">
         <LogoMenu
           onShutdown={onShutdown}

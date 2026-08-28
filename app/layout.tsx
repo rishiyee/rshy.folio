@@ -8,9 +8,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Designer & Developer Portfolio",
+  title: {
+    default: "Hrishikesh Vyshnav — Designer & Developer",
+    template: "%s — Hrishikesh Vyshnav",
+  },
   description:
-    "A personal design and development portfolio presented as an interactive desktop.",
+    "Portfolio of Hrishikesh Vyshnav, an independent designer and developer creating brands, products, interfaces, and expressive digital experiences.",
+  keywords: ["Hrishikesh Vyshnav", "product designer", "UI UX designer", "creative developer", "frontend developer", "portfolio"],
+  authors: [{ name: "Hrishikesh Vyshnav" }],
+  creator: "Hrishikesh Vyshnav",
+  openGraph: {
+    type: "website",
+    title: "Hrishikesh Vyshnav — Designer & Developer",
+    description: "Selected work across identity, interface, product design, and creative development.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Hrishikesh Vyshnav — Designer & Developer",
+    description: "Selected work across identity, interface, product design, and creative development.",
+  },
 };
 
 export default function RootLayout({

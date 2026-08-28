@@ -183,7 +183,17 @@ export default function AboutWindow() {
             I design and build brands, products,
             and digital experiences with equal attention to form and function.
           </p>
-
+          <div className="mt-5 flex items-center gap-2 border-t border-line pt-4 text-[9px] uppercase tracking-[0.12em] text-foreground">
+            <span className="h-1.5 w-1.5 bg-emerald-500 shadow-[0_0_6px_rgb(16_185_129)]" />
+            Available for full-time roles
+          </div>
+          <a
+            href="/Hrishikesh-Vyshnav-Resume.pdf"
+            download
+            className="mt-4 inline-flex border border-line px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-foreground transition-colors hover:border-accent hover:text-accent"
+          >
+            Download résumé ↓
+          </a>
         </div>
       </aside>
 

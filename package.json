@@ -13,6 +13,7 @@
     "pdfjs-dist": "5.4.624",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "vault66-crt-effect": "^3.1.1",
     "wordle-words": "^0.0.0"
   },
   "devDependencies": {

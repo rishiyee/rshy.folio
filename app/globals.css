@@ -147,32 +147,169 @@ body {
   animation: crt-on 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.grain-noise {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch' result='t'/><feColorMatrix in='t' type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.33 0.33 0.33 0 0' result='w'/><feComponentTransfer in='w'><feFuncA type='gamma' amplitude='1' exponent='6' offset='0'/></feComponentTransfer></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  background-repeat: repeat;
-  background-size: 140px 140px;
-  animation: grain-shift 0.14s steps(1) infinite;
-}
-
-@keyframes grain-shift {
+@keyframes boot-crt-exit {
   0% {
-    transform: translate(0, 0);
+    transform: scaleY(1);
+    opacity: 1;
+    filter: brightness(1);
   }
-  20% {
-    transform: translate(-3%, 2%);
-  }
-  40% {
-    transform: translate(2%, -4%);
-  }
-  60% {
-    transform: translate(-4%, -1%);
-    filter: brightness(1.15);
-  }
-  80% {
-    transform: translate(3%, 3%);
+  68% {
+    transform: scaleY(0.008);
+    opacity: 1;
+    filter: brightness(2.4);
   }
   100% {
-    transform: translate(0, 0);
+    transform: scaleY(0.002) scaleX(0.86);
+    opacity: 0;
+    filter: brightness(3);
+  }
+}
+
+.boot-crt-exit {
+  transform-origin: center;
+  animation: boot-crt-exit 380ms cubic-bezier(0.7, 0, 0.3, 1) forwards;
+}
+
+.boot-ready-line {
+  margin-top: 0.35rem;
+  color: rgb(134, 239, 172);
+  text-shadow: 0 0 8px rgb(34 197 94 / 55%);
+}
+
+.boot-launch-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: rgb(163, 163, 163);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: boot-status-in 180ms ease-out both;
+}
+
+.boot-launch-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  background: rgb(74, 222, 128);
+  box-shadow: 0 0 8px rgb(74 222 128 / 80%);
+  animation: boot-launch-pulse 500ms ease-in-out infinite alternate;
+}
+
+@keyframes boot-status-in {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes boot-launch-pulse {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes desktop-signal-sweep {
+  0% {
+    top: 50%;
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.desktop-entry-signal {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 20000;
+  height: 2px;
+  pointer-events: none;
+  background: rgb(255 255 255 / 80%);
+  box-shadow: 0 0 10px 2px rgb(255 255 255 / 45%);
+  animation: desktop-signal-sweep 480ms ease-out 180ms both;
+}
+
+@keyframes desktop-topbar-entry {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes desktop-icon-entry {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.desktop-entering .desktop-entry-topbar {
+  animation: desktop-topbar-entry 240ms ease-out 380ms both;
+}
+
+.desktop-entering .desktop-entry-icon {
+  animation: desktop-icon-entry 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.desktop-entering .desktop-entry-icon[data-entry-index="0"] {
+  animation-delay: 500ms;
+}
+
+.desktop-entering .desktop-entry-icon[data-entry-index="1"] {
+  animation-delay: 570ms;
+}
+
+.desktop-entering .desktop-entry-icon[data-entry-index="2"] {
+  animation-delay: 640ms;
+}
+
+.desktop-entering .desktop-entry-icon[data-entry-index="3"] {
+  animation-delay: 710ms;
+}
+
+.desktop-entering .desktop-entry-icon[data-entry-index="4"] {
+  animation-delay: 780ms;
+}
+
+.desktop-entering .desktop-entry-icon[data-entry-index="5"] {
+  animation-delay: 850ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-crt-exit {
+    animation: none;
+    opacity: 0;
+  }
+
+  .crt-on,
+  .boot-launch-dot,
+  .boot-launch-status,
+  .desktop-entry-signal,
+  .desktop-entering .desktop-entry-topbar,
+  .desktop-entering .desktop-entry-icon {
+    animation: none;
   }
 }
 
