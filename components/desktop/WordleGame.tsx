@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { all as wordleWords } from "../../node_modules/wordle-words/index.mjs";
 
 const ANSWERS = [
   "ABOUT", "ABOVE", "ACTOR", "ACUTE", "ADORE", "AGILE", "ALERT", "ALIEN",
@@ -17,6 +18,10 @@ const ROWS = 6;
 const COLS = 5;
 const STORAGE_KEY = "portfolio-wordle-v2";
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+const VALID_GUESSES = new Set([
+  ...ANSWERS,
+  ...wordleWords.map((word) => word.toUpperCase()),
+]);
 
 type TileState = "correct" | "present" | "absent";
 type SavedGame = {
@@ -132,6 +137,11 @@ export default function WordleGame() {
     if (key === "ENTER") {
       if (current.length !== COLS) {
         setMessage("Not enough letters.");
+        return;
+      }
+
+      if (!VALID_GUESSES.has(current)) {
+        setMessage("Not in word list.");
         return;
       }
 
