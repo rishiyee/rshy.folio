@@ -16,6 +16,16 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Multiplayer cursors
+
+The desktop uses Liveblocks Presence for anonymous multiplayer cursors. Create a Liveblocks project, then set the public key locally:
+
+```bash
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_dev_your_key
+```
+
+Add the same variable in Vercel under **Project Settings → Environment Variables** for Production and Preview deployments. Production visitors share the `portfolio-production` room; preview deployments are isolated by deployment hostname. If the key is omitted, multiplayer is disabled and the portfolio continues to work normally.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

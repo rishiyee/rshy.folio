@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import TopBar from "./TopBar";
 import DesktopIcon, { type IconOrigin } from "./DesktopIcon";
 import WindowPanel, { type WindowTransitionPhase } from "./WindowPanel";
@@ -72,7 +72,7 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   chat: { x: 120, y: 160 },
 };
 
-export default function Desktop() {
+export default function Desktop({ multiplayerLayer }: { multiplayerLayer?: ReactNode }) {
   const [booted, setBooted] = useState(false);
   const [entryReady, setEntryReady] = useState(false);
   const [chatPrompt, setChatPrompt] = useState<{ id: number; text: string }>();
@@ -597,6 +597,7 @@ export default function Desktop() {
             </button>
           </aside>
         )}
+        {entryReady && multiplayerLayer}
       </div>
 
       <ShutdownOverlay

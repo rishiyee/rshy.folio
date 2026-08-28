@@ -16,7 +16,8 @@ const ANSWERS = [
 
 const ROWS = 6;
 const COLS = 5;
-const STORAGE_KEY = "portfolio-wordle-v2";
+const STORAGE_KEY = "portfolio-wordle-v3";
+const DEVICE_SEED_KEY = "portfolio-wordle-device-seed";
 const KEYBOARD_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 const VALID_GUESSES = new Set([
   ...ANSWERS,
@@ -25,6 +26,7 @@ const VALID_GUESSES = new Set([
 
 type TileState = "correct" | "present" | "absent";
 type SavedGame = {
+  day: string;
   answer: string;
   round: number;
   guesses: string[];
@@ -35,9 +37,24 @@ function dayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function answerForDay(day: string) {
-  const seed = day.replaceAll("-", "").split("").reduce((total, digit) => total + Number(digit), 0);
-  return ANSWERS[seed % ANSWERS.length];
+function deviceSeed() {
+  const saved = window.localStorage.getItem(DEVICE_SEED_KEY);
+  if (saved) return saved;
+
+  const values = new Uint32Array(2);
+  window.crypto.getRandomValues(values);
+  const seed = Array.from(values, (value) => value.toString(36)).join("-");
+  window.localStorage.setItem(DEVICE_SEED_KEY, seed);
+  return seed;
+}
+
+function answerForDevice(day: string, seed: string) {
+  let hash = 2166136261;
+  for (const character of `${day}:${seed}`) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ANSWERS[(hash >>> 0) % ANSWERS.length];
 }
 
 function scoreGuess(guess: string, answer: string): TileState[] {
@@ -72,7 +89,7 @@ const stateRank: Record<TileState, number> = { absent: 1, present: 2, correct: 3
 
 export default function WordleGame() {
   const today = useMemo(() => dayKey(), []);
-  const [answer, setAnswer] = useState(() => answerForDay(today));
+  const [answer, setAnswer] = useState(ANSWERS[0]);
   const [round, setRound] = useState(1);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState("");
@@ -83,7 +100,19 @@ export default function WordleGame() {
     const timer = window.setTimeout(() => {
       try {
         const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "null") as SavedGame | null;
-        if (!saved || !ANSWERS.includes(saved.answer)) return;
+        if (!saved || saved.day !== today || !ANSWERS.includes(saved.answer)) {
+          const nextAnswer = answerForDevice(today, deviceSeed());
+          const initialGame: SavedGame = {
+            day: today,
+            answer: nextAnswer,
+            round: 1,
+            guesses: [],
+            status: "playing",
+          };
+          setAnswer(nextAnswer);
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialGame));
+          return;
+        }
         setAnswer(saved.answer);
         setRound(saved.round);
         setGuesses(saved.guesses);
@@ -95,7 +124,7 @@ export default function WordleGame() {
       }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [today]);
 
   function startNewGame() {
     const availableAnswers = ANSWERS.filter((word) => word !== answer);
@@ -109,7 +138,7 @@ export default function WordleGame() {
     setMessage("Guess the five-letter word.");
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ answer: nextAnswer, round: nextRound, guesses: [], status: "playing" } satisfies SavedGame)
+      JSON.stringify({ day: today, answer: nextAnswer, round: nextRound, guesses: [], status: "playing" } satisfies SavedGame)
     );
   }
 
@@ -160,7 +189,7 @@ export default function WordleGame() {
       );
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ answer, round, guesses: nextGuesses, status: nextStatus } satisfies SavedGame)
+        JSON.stringify({ day: today, answer, round, guesses: nextGuesses, status: nextStatus } satisfies SavedGame)
       );
       return;
     }
@@ -169,7 +198,7 @@ export default function WordleGame() {
       setCurrent((word) => `${word}${key}`);
       setMessage("Guess the five-letter word.");
     }
-  }, [answer, current, guesses, round, status]);
+  }, [answer, current, guesses, round, status, today]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
