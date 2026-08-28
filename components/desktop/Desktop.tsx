@@ -15,6 +15,7 @@ import AboutWindow from "./AboutWindow";
 import PdfViewer from "./PdfViewer";
 import PdfThumbnail from "./PdfThumbnail";
 import MinimizedDock from "./MinimizedDock";
+import WordleGame from "./WordleGame";
 import {
   pointTarget,
   toViewportRect,
@@ -43,10 +44,11 @@ const WINDOW_TITLES = {
   doc: "case1.pdf",
   notes: "notes.txt",
   contact: "contact.txt",
+  wordle: "wordle.app",
 };
 
-type WindowId = "works" | "terminal" | "about" | "doc" | "notes" | "contact";
-type IconId = "works" | "terminal" | "notes" | "contact" | "about";
+type WindowId = "works" | "terminal" | "about" | "doc" | "notes" | "contact" | "wordle";
+type IconId = "works" | "terminal" | "notes" | "contact" | "about" | "wordle";
 type OpenWindow = {
   id: WindowId;
   position: { x: number; y: number };
@@ -64,6 +66,7 @@ const DEFAULT_ICON_POSITIONS: Record<IconId, { x: number; y: number }> = {
   notes: { x: 24, y: 264 },
   contact: { x: 24, y: 264 },
   about: { x: 24, y: 368 },
+  wordle: { x: 120, y: 56 },
 };
 
 export default function Desktop() {
@@ -187,6 +190,7 @@ export default function Desktop() {
       openWindow.id === "notes" ||
       openWindow.id === "contact" ||
       openWindow.id === "about"
+          || openWindow.id === "wordle"
         ? iconElements.current[openWindow.id]
         : openWindow.id === "doc"
           ? docLauncherRef.current
@@ -339,6 +343,18 @@ export default function Desktop() {
           }}
         />
         <DesktopIcon
+          label="Wordle"
+          icon="/wordle.svg"
+          position={iconPositions.wordle}
+          labelTone={iconLabelTone}
+          onMove={(position) => moveIcon("wordle", position)}
+          onOpen={(origin) => openWindow("wordle", origin)}
+          onElement={(element) => {
+            if (element) iconElements.current.wordle = element;
+            else delete iconElements.current.wordle;
+          }}
+        />
+        <DesktopIcon
           label="Terminal"
           icon="/terminal.svg"
           position={iconPositions.terminal}
@@ -396,10 +412,13 @@ export default function Desktop() {
                 ? "w-[min(880px,calc(100vw-2rem))] h-[min(650px,calc(100vh-5rem))]"
                 : w.id === "contact"
                   ? "w-[min(820px,calc(100vw-2rem))] h-[min(610px,calc(100vh-5rem))]"
+                  : w.id === "wordle"
+                    ? "w-[min(500px,calc(100vw-2rem))] h-[min(680px,calc(100vh-5rem))]"
                   : undefined
             }
             contentClassName={
               w.id === "doc" || w.id === "about" || w.id === "contact"
+                || w.id === "wordle"
                 ? "p-0"
                 : undefined
             }
@@ -434,6 +453,8 @@ export default function Desktop() {
               <NotesApp />
             ) : w.id === "contact" ? (
               <ContactForm />
+            ) : w.id === "wordle" ? (
+              <WordleGame />
             ) : null}
           </WindowPanel>
         ))}
