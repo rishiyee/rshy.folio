@@ -1,9 +1,8 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <title>Contact</title>
-  <path d="M8 8H52V12H56V52H52V56H8V52H4V12H8V8Z" fill="#0A0A0A"/>
-  <path d="M10 12H50V16H54V48H50V52H10V48H8V16H10V12Z" fill="#8053FC"/>
-  <path d="M14 20H48V24H52V42H48V46H14V42H12V24H14V20Z" fill="#F5F5F2"/>
-  <path d="M16 24H48V28H44V32H40V36H24V32H20V28H16V24Z" fill="#0A0A0A"/>
-  <path d="M16 30H20V34H24V38H40V34H44V30H48V42H16V30Z" fill="#D9D9D4"/>
-  <path d="M12 14H18V18H12V14ZM22 14H28V18H22V14ZM46 46H50V50H46V46Z" fill="#C5AFFF"/>
+  <rect x="4" y="10" width="56" height="46" rx="7" fill="#0A0A0A"/>
+  <rect x="8" y="14" width="48" height="38" rx="3.5" fill="#FC00F1"/>
+  <path d="M9 18.5C9 16.567 10.567 15 12.5 15H51.5C53.433 15 55 16.567 55 18.5V21L35.688 36.323C33.534 38.032 30.466 38.032 28.312 36.323L9 21V18.5Z" fill="#86F6FA"/>
+  <path d="M9 24.5L25.83 38.254C29.424 41.19 34.576 41.19 38.17 38.254L55 24.5V48.5C55 50.433 53.433 52 51.5 52H12.5C10.567 52 9 50.433 9 48.5V24.5Z" fill="#F5F5F2"/>
+  <path d="M9 48L23.5 35.5M55 48L40.5 35.5" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
