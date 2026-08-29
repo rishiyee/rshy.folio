@@ -12,8 +12,9 @@ export default function Home() {
 
   return (
     <MultiplayerRoom
-      apiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY}
       roomId={roomId}
+      supabaseKey={process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+      supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL}
     />
   );
 }

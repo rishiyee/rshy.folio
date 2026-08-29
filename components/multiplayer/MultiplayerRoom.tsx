@@ -1,25 +1,24 @@
 "use client";
 
-import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 import Desktop from "@/components/desktop/Desktop";
 import MultiplayerCursors from "./MultiplayerCursors";
 
-const INITIAL_USER = { name: "Visitor", color: "#f2c94c" };
-
 export default function MultiplayerRoom({
-  apiKey,
+  supabaseUrl,
+  supabaseKey,
   roomId,
 }: {
-  apiKey?: string;
+  supabaseUrl?: string;
+  supabaseKey?: string;
   roomId: string;
 }) {
-  if (!apiKey) return <Desktop />;
+  if (!supabaseUrl || !supabaseKey) return <Desktop />;
 
   return (
-    <LiveblocksProvider publicApiKey={apiKey} throttle={33}>
-      <RoomProvider id={roomId} initialPresence={{ cursor: null, user: INITIAL_USER }}>
-        <Desktop multiplayerLayer={<MultiplayerCursors />} />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <Desktop
+      multiplayerLayer={
+        <MultiplayerCursors roomId={roomId} supabaseKey={supabaseKey} supabaseUrl={supabaseUrl} />
+      }
+    />
   );
 }

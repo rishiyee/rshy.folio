@@ -18,13 +18,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Multiplayer cursors
 
-The desktop uses Liveblocks Presence for anonymous multiplayer cursors. Create a Liveblocks project, then set the public key locally:
+The desktop uses Supabase Realtime Broadcast for anonymous multiplayer cursors. Create a Supabase project, then copy its Project URL and publishable key from the project's **Connect** dialog:
 
 ```bash
-NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_dev_your_key
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 ```
 
-Add the same variable in Vercel under **Project Settings → Environment Variables** for Production and Preview deployments. Production visitors share the `portfolio-production` room; preview deployments are isolated by deployment hostname. If the key is omitted, multiplayer is disabled and the portfolio continues to work normally.
+Add both variables in Vercel under **Project Settings → Environment Variables** for Production and Preview deployments. Production visitors share the `portfolio-production` channel; preview deployments are isolated by deployment hostname. If either variable is omitted, multiplayer is disabled and the portfolio continues to work normally.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

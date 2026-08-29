@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useOthers, useUpdateMyPresence } from "@liveblocks/react";
+import { useEffect, useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 const IDENTITY_KEY = "portfolio-cursor-identity";
 const CURSOR_COLORS = ["#ff5c5c", "#5c9dff", "#72d572", "#f2c94c", "#c77dff", "#ff7ac8"];
 const MAX_VISIBLE_CURSORS = 20;
+const BROADCAST_INTERVAL_MS = 33;
 
 type Identity = { name: string; color: string };
+type Cursor = { x: number; y: number } | null;
+type CursorMessage = { clientId: string; cursor: Cursor; user: Identity };
 
 function getIdentity(): Identity {
   try {
@@ -27,72 +30,141 @@ function getIdentity(): Identity {
   return identity;
 }
 
-export default function MultiplayerCursors() {
-  const updateMyPresence = useUpdateMyPresence();
-  const others = useOthers();
-  const frameRef = useRef<number | null>(null);
-  const latestPosition = useRef<{ x: number; y: number } | null>(null);
+function isCursorMessage(value: unknown): value is CursorMessage {
+  if (!value || typeof value !== "object") return false;
+  const message = value as Partial<CursorMessage>;
+  const cursorIsValid = message.cursor === null || (
+    typeof message.cursor?.x === "number" && typeof message.cursor.y === "number"
+  );
+  return typeof message.clientId === "string"
+    && typeof message.user?.name === "string"
+    && typeof message.user.color === "string"
+    && cursorIsValid;
+}
+
+export default function MultiplayerCursors({
+  roomId,
+  supabaseKey,
+  supabaseUrl,
+}: {
+  roomId: string;
+  supabaseKey: string;
+  supabaseUrl: string;
+}) {
+  const [others, setOthers] = useState<Map<string, CursorMessage>>(() => new Map());
+  const sendTimerRef = useRef<number | null>(null);
+  const lastSentAtRef = useRef(0);
+  const latestPositionRef = useRef<Cursor>(null);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      updateMyPresence({ user: getIdentity() });
+    const clientId = window.crypto.randomUUID();
+    const identity = getIdentity();
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
     });
-    return () => window.cancelAnimationFrame(frame);
-  }, [updateMyPresence]);
+    const channel = supabase.channel(roomId, {
+      config: { broadcast: { self: false }, presence: { key: clientId } },
+    });
 
-  useEffect(() => {
-    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-    if (coarsePointer) return;
+    channel
+      .on("broadcast", { event: "cursor" }, ({ payload }) => {
+        if (!isCursorMessage(payload) || payload.clientId === clientId) return;
+        setOthers((current) => {
+          const next = new Map(current);
+          if (payload.cursor) next.set(payload.clientId, payload);
+          else next.delete(payload.clientId);
+          return next;
+        });
+      })
+      .on("presence", { event: "leave" }, ({ leftPresences }) => {
+        const departedIds = new Set(
+          leftPresences.flatMap((presence) => {
+            const id = (presence as { clientId?: unknown }).clientId;
+            return typeof id === "string" ? [id] : [];
+          }),
+        );
+        if (departedIds.size === 0) return;
+        setOthers((current) => {
+          const next = new Map(current);
+          departedIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") await channel.track({ clientId });
+      });
+
+    function broadcastCursor(cursor: Cursor) {
+      void channel.send({
+        type: "broadcast",
+        event: "cursor",
+        payload: { clientId, cursor, user: identity } satisfies CursorMessage,
+      });
+      lastSentAtRef.current = performance.now();
+    }
 
     function flushPosition() {
-      frameRef.current = null;
-      updateMyPresence({ cursor: latestPosition.current });
+      sendTimerRef.current = null;
+      broadcastCursor(latestPositionRef.current);
+    }
+
+    function schedulePosition() {
+      if (sendTimerRef.current !== null) return;
+      const delay = Math.max(0, BROADCAST_INTERVAL_MS - (performance.now() - lastSentAtRef.current));
+      sendTimerRef.current = window.setTimeout(flushPosition, delay);
     }
 
     function onPointerMove(event: PointerEvent) {
-      latestPosition.current = {
+      latestPositionRef.current = {
         x: Math.min(1, Math.max(0, event.clientX / window.innerWidth)),
         y: Math.min(1, Math.max(0, event.clientY / window.innerHeight)),
       };
-      if (frameRef.current === null) {
-        frameRef.current = window.requestAnimationFrame(flushPosition);
-      }
+      schedulePosition();
     }
 
     function hideCursor() {
-      latestPosition.current = null;
-      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-      updateMyPresence({ cursor: null });
+      latestPositionRef.current = null;
+      if (sendTimerRef.current !== null) window.clearTimeout(sendTimerRef.current);
+      sendTimerRef.current = null;
+      broadcastCursor(null);
     }
 
     function onVisibilityChange() {
       if (document.visibilityState === "hidden") hideCursor();
     }
 
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("blur", hideCursor);
-    document.documentElement.addEventListener("pointerleave", hideCursor);
-    document.addEventListener("visibilitychange", onVisibilityChange);
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    if (!coarsePointer) {
+      window.addEventListener("pointermove", onPointerMove, { passive: true });
+      window.addEventListener("blur", hideCursor);
+      document.documentElement.addEventListener("pointerleave", hideCursor);
+      document.addEventListener("visibilitychange", onVisibilityChange);
+    }
+
     return () => {
-      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-      updateMyPresence({ cursor: null });
+      if (sendTimerRef.current !== null) window.clearTimeout(sendTimerRef.current);
+      void channel.send({
+        type: "broadcast",
+        event: "cursor",
+        payload: { clientId, cursor: null, user: identity } satisfies CursorMessage,
+      });
+      void supabase.removeChannel(channel);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("blur", hideCursor);
       document.documentElement.removeEventListener("pointerleave", hideCursor);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [updateMyPresence]);
+  }, [roomId, supabaseKey, supabaseUrl]);
 
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[19000] overflow-hidden">
-      {others.slice(0, MAX_VISIBLE_CURSORS).map((other) => {
-        const cursor = other.presence.cursor;
+      {Array.from(others.values()).slice(0, MAX_VISIBLE_CURSORS).map((other) => {
+        const cursor = other.cursor;
         if (!cursor) return null;
-        const user = other.presence.user;
+        const user = other.user;
         return (
           <div
-            key={other.connectionId}
+            key={other.clientId}
             className="absolute left-0 top-0 transition-transform duration-75 ease-linear will-change-transform"
             style={{ transform: `translate3d(${cursor.x * 100}vw, ${cursor.y * 100}vh, 0)` }}
           >
