@@ -12,10 +12,11 @@ export default function ContactForm() {
   const [email, setEmail] = useState("");
   const [projectType, setProjectType] = useState<ProjectType>("Product");
   const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       setError("Please complete your name, email, and project brief.");
@@ -27,8 +28,19 @@ export default function ContactForm() {
     }
     setError("");
     setStatus("sending");
-    // TODO: wire real delivery through Resend once an API key and destination inbox exist.
-    setTimeout(() => setStatus("sent"), 600);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, projectType, message, website }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Your inquiry could not be sent.");
+      setStatus("sent");
+    } catch (submissionError) {
+      setStatus("idle");
+      setError(submissionError instanceof Error ? submissionError.message : "Your inquiry could not be sent.");
+    }
   }
 
   function resetForm() {
@@ -36,6 +48,7 @@ export default function ContactForm() {
     setEmail("");
     setProjectType("Product");
     setMessage("");
+    setWebsite("");
     setError("");
     setStatus("idle");
   }
@@ -90,6 +103,10 @@ export default function ContactForm() {
       </aside>
 
       <form onSubmit={handleSubmit} noValidate className="flex min-h-full flex-col">
+        <label className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+          Website
+          <input name="website" value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+        </label>
         <div className="grid border-b border-line sm:grid-cols-2">
           <label className="group border-b border-line p-4 focus-within:bg-foreground/[0.025] sm:border-b-0 sm:border-r sm:p-5">
             <span className="block text-[9px] uppercase tracking-[0.15em] text-dim group-focus-within:text-accent">01 / Your name *</span>

@@ -33,6 +33,12 @@ Run `supabase/migrations/20260831000000_create_portfolio_signals.sql` in the Sup
 
 The included Row Level Security policies prevent public visitors from reading individual logs. The public stats function exposes only aggregate visit count and average time. Review individual responses and visits from the Supabase Table Editor or with an authenticated server-side/admin tool.
 
+### Contact inquiries
+
+Run `supabase/migrations/20260831010000_create_contact_inquiries.sql` to create the private contact inbox. The contact form submits through `/api/contact`, validates input on the server, and stores accepted inquiries in `public.contact_inquiries`.
+
+Public visitors may insert an inquiry but cannot read, edit, or delete any submissions. Review and update inquiry statuses from the Supabase Table Editor.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
