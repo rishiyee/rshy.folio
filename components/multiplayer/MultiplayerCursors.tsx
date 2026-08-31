@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const IDENTITY_KEY = "portfolio-cursor-identity";
 const CURSOR_COLORS = ["#ff5c5c", "#5c9dff", "#72d572", "#f2c94c", "#c77dff", "#ff7ac8"];
@@ -18,7 +18,7 @@ type Identity = { name: string; color: string };
 type Cursor = { x: number; y: number } | null;
 type CursorMessage = { clientId: string; cursor: Cursor; user: Identity };
 type ReactionId = (typeof REACTIONS)[number]["id"];
-type ReactionMessage = { clientId: string; reaction: ReactionId; user: Identity; sentAt: number };
+type ReactionMessage = { clientId: string; reaction: ReactionId; user: Identity; eventId: string };
 type ReactionNotice = ReactionMessage & { noticeId: string };
 
 function getIdentity(): Identity {
@@ -45,7 +45,7 @@ function isReactionMessage(value: unknown): value is ReactionMessage {
   return typeof message.clientId === "string"
     && typeof message.user?.name === "string"
     && typeof message.user.color === "string"
-    && typeof message.sentAt === "number"
+    && typeof message.eventId === "string"
     && REACTIONS.some((reaction) => reaction.id === message.reaction);
 }
 
@@ -72,17 +72,22 @@ export default function MultiplayerCursors({
 }) {
   const [others, setOthers] = useState<Map<string, CursorMessage>>(() => new Map());
   const [onlineCount, setOnlineCount] = useState(1);
+  const [totalVisits, setTotalVisits] = useState<number | null>(null);
+  const [secondsHere, setSecondsHere] = useState(0);
   const [notices, setNotices] = useState<ReactionNotice[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
+  const supabaseRef = useRef<SupabaseClient | null>(null);
   const clientIdRef = useRef("");
   const identityRef = useRef<Identity | null>(null);
+  const sessionIdRef = useRef("");
   const sendTimerRef = useRef<number | null>(null);
   const lastSentAtRef = useRef(0);
   const latestPositionRef = useRef<Cursor>(null);
 
   useEffect(() => {
     const clientId = window.crypto.randomUUID();
+    const sessionId = window.crypto.randomUUID();
     const identity = getIdentity();
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
@@ -90,9 +95,37 @@ export default function MultiplayerCursors({
     const channel = supabase.channel(roomId, {
       config: { broadcast: { self: false }, presence: { key: clientId } },
     });
+    supabaseRef.current = supabase;
     channelRef.current = channel;
     clientIdRef.current = clientId;
     identityRef.current = identity;
+    sessionIdRef.current = sessionId;
+
+    async function startVisit() {
+      const { error } = await supabase.from("portfolio_visits").insert({
+        session_id: sessionId,
+        visitor_name: identity.name,
+        page_path: window.location.pathname,
+      });
+      if (error) {
+        console.warn("Could not start portfolio visit", error.message);
+        return;
+      }
+      const { data } = await supabase.rpc("get_portfolio_visit_stats");
+      const stats = Array.isArray(data) ? data[0] : data;
+      if (stats && typeof stats.total_visits === "number") setTotalVisits(stats.total_visits);
+    }
+
+    async function updateVisit() {
+      await supabase
+        .from("portfolio_visits")
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq("session_id", sessionId);
+    }
+
+    void startVisit();
+    const heartbeat = window.setInterval(() => void updateVisit(), 30_000);
+    const elapsedTimer = window.setInterval(() => setSecondsHere((seconds) => seconds + 1), 1_000);
 
     channel
       .on("broadcast", { event: "cursor" }, ({ payload }) => {
@@ -127,7 +160,7 @@ export default function MultiplayerCursors({
       })
       .on("broadcast", { event: "reaction" }, ({ payload }) => {
         if (!isReactionMessage(payload)) return;
-        const notice = { ...payload, noticeId: `${payload.clientId}-${payload.sentAt}` };
+        const notice = { ...payload, noticeId: payload.eventId };
         setNotices((current) => [...current.slice(-2), notice]);
         window.setTimeout(() => {
           setNotices((current) => current.filter((item) => item.noticeId !== notice.noticeId));
@@ -173,7 +206,10 @@ export default function MultiplayerCursors({
     }
 
     function onVisibilityChange() {
-      if (document.visibilityState === "hidden") hideCursor();
+      if (document.visibilityState === "hidden") {
+        hideCursor();
+        void updateVisit();
+      }
     }
 
     const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
@@ -186,6 +222,9 @@ export default function MultiplayerCursors({
 
     return () => {
       if (sendTimerRef.current !== null) window.clearTimeout(sendTimerRef.current);
+      window.clearInterval(heartbeat);
+      window.clearInterval(elapsedTimer);
+      void updateVisit();
       void channel.send({
         type: "broadcast",
         event: "cursor",
@@ -197,6 +236,7 @@ export default function MultiplayerCursors({
       document.documentElement.removeEventListener("pointerleave", hideCursor);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       channelRef.current = null;
+      supabaseRef.current = null;
     };
   }, [roomId, supabaseKey, supabaseUrl]);
 
@@ -208,10 +248,20 @@ export default function MultiplayerCursors({
       clientId: clientIdRef.current,
       reaction,
       user: identity,
-      sentAt: Date.now(),
+      eventId: window.crypto.randomUUID(),
     };
     void channel.send({ type: "broadcast", event: "reaction", payload: message });
-    const notice = { ...message, noticeId: `${message.clientId}-${message.sentAt}` };
+    void supabaseRef.current
+      ?.from("portfolio_signals")
+      .insert({
+        reaction,
+        visitor_name: identity.name,
+        page_path: window.location.pathname,
+      })
+      .then(({ error }) => {
+        if (error) console.warn("Could not save portfolio signal", error.message);
+      });
+    const notice = { ...message, noticeId: message.eventId };
     setNotices((current) => [...current.slice(-2), notice]);
     window.setTimeout(() => {
       setNotices((current) => current.filter((item) => item.noticeId !== notice.noticeId));
@@ -260,7 +310,11 @@ export default function MultiplayerCursors({
           <div className="pointer-events-auto w-56 border border-line bg-background/95 p-2 shadow-xl backdrop-blur-sm">
             <div className="mb-2 border-b border-line px-1 pb-2">
               <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-foreground">Leave a signal</p>
-              <p className="mt-1 text-[8px] leading-3 text-dim">Quick feedback, shared live with everyone here.</p>
+              <p className="mt-1 text-[8px] leading-3 text-dim">Shared live and saved anonymously for review.</p>
+            </div>
+            <div className="mb-2 grid grid-cols-2 gap-px bg-line text-center">
+              <div className="bg-background px-2 py-2"><p className="text-[8px] uppercase text-dimmer">Total visits</p><p className="mt-1 text-xs text-foreground">{totalVisits ?? "—"}</p></div>
+              <div className="bg-background px-2 py-2"><p className="text-[8px] uppercase text-dimmer">Your time</p><p className="mt-1 text-xs text-foreground">{formatDuration(secondsHere)}</p></div>
             </div>
             <div className="grid grid-cols-2 gap-1">
               {REACTIONS.map((reaction) => (
@@ -280,4 +334,10 @@ export default function MultiplayerCursors({
       </div>
     </div>
   );
+}
+
+function formatDuration(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
