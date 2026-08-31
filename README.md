@@ -16,9 +16,9 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Multiplayer cursors
+## Multiplayer visitor lounge
 
-The desktop uses Supabase Realtime Broadcast for anonymous multiplayer cursors. Create a Supabase project, then copy its Project URL and publishable key from the project's **Connect** dialog:
+The desktop uses Supabase Realtime Presence and Broadcast for anonymous visitor count, live preset feedback signals, and multiplayer cursors. Create a Supabase project, then copy its Project URL and publishable key from the project's **Connect** dialog:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co

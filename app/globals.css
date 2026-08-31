@@ -326,6 +326,17 @@ body {
   animation: fade-in 400ms ease-out both;
 }
 
+@keyframes multiplayer-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.multiplayer-notice {
+  animation: multiplayer-notice-in 180ms ease-out both;
+}
+
 @keyframes chat-startup-in {
   from {
     opacity: 0;

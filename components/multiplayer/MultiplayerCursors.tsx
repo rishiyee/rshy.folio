@@ -7,10 +7,19 @@ const IDENTITY_KEY = "portfolio-cursor-identity";
 const CURSOR_COLORS = ["#ff5c5c", "#5c9dff", "#72d572", "#f2c94c", "#c77dff", "#ff7ac8"];
 const MAX_VISIBLE_CURSORS = 20;
 const BROADCAST_INTERVAL_MS = 33;
+const REACTIONS = [
+  { id: "design", icon: "✦", label: "Great design" },
+  { id: "build", icon: "⚡", label: "Smart build" },
+  { id: "idea", icon: "+1", label: "Love the idea" },
+  { id: "talk", icon: "@", label: "Let's talk" },
+] as const;
 
 type Identity = { name: string; color: string };
 type Cursor = { x: number; y: number } | null;
 type CursorMessage = { clientId: string; cursor: Cursor; user: Identity };
+type ReactionId = (typeof REACTIONS)[number]["id"];
+type ReactionMessage = { clientId: string; reaction: ReactionId; user: Identity; sentAt: number };
+type ReactionNotice = ReactionMessage & { noticeId: string };
 
 function getIdentity(): Identity {
   try {
@@ -28,6 +37,16 @@ function getIdentity(): Identity {
   };
   window.localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
   return identity;
+}
+
+function isReactionMessage(value: unknown): value is ReactionMessage {
+  if (!value || typeof value !== "object") return false;
+  const message = value as Partial<ReactionMessage>;
+  return typeof message.clientId === "string"
+    && typeof message.user?.name === "string"
+    && typeof message.user.color === "string"
+    && typeof message.sentAt === "number"
+    && REACTIONS.some((reaction) => reaction.id === message.reaction);
 }
 
 function isCursorMessage(value: unknown): value is CursorMessage {
@@ -52,6 +71,12 @@ export default function MultiplayerCursors({
   supabaseUrl: string;
 }) {
   const [others, setOthers] = useState<Map<string, CursorMessage>>(() => new Map());
+  const [onlineCount, setOnlineCount] = useState(1);
+  const [notices, setNotices] = useState<ReactionNotice[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
+  const clientIdRef = useRef("");
+  const identityRef = useRef<Identity | null>(null);
   const sendTimerRef = useRef<number | null>(null);
   const lastSentAtRef = useRef(0);
   const latestPositionRef = useRef<Cursor>(null);
@@ -65,6 +90,9 @@ export default function MultiplayerCursors({
     const channel = supabase.channel(roomId, {
       config: { broadcast: { self: false }, presence: { key: clientId } },
     });
+    channelRef.current = channel;
+    clientIdRef.current = clientId;
+    identityRef.current = identity;
 
     channel
       .on("broadcast", { event: "cursor" }, ({ payload }) => {
@@ -89,6 +117,21 @@ export default function MultiplayerCursors({
           departedIds.forEach((id) => next.delete(id));
           return next;
         });
+      })
+      .on("presence", { event: "sync" }, () => {
+        const count = Object.values(channel.presenceState()).reduce(
+          (total, presences) => total + presences.length,
+          0,
+        );
+        setOnlineCount(Math.max(1, count));
+      })
+      .on("broadcast", { event: "reaction" }, ({ payload }) => {
+        if (!isReactionMessage(payload)) return;
+        const notice = { ...payload, noticeId: `${payload.clientId}-${payload.sentAt}` };
+        setNotices((current) => [...current.slice(-2), notice]);
+        window.setTimeout(() => {
+          setNotices((current) => current.filter((item) => item.noticeId !== notice.noticeId));
+        }, 4200);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") await channel.track({ clientId });
@@ -153,12 +196,33 @@ export default function MultiplayerCursors({
       window.removeEventListener("blur", hideCursor);
       document.documentElement.removeEventListener("pointerleave", hideCursor);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      channelRef.current = null;
     };
   }, [roomId, supabaseKey, supabaseUrl]);
 
+  function sendReaction(reaction: ReactionId) {
+    const channel = channelRef.current;
+    const identity = identityRef.current;
+    if (!channel || !identity) return;
+    const message: ReactionMessage = {
+      clientId: clientIdRef.current,
+      reaction,
+      user: identity,
+      sentAt: Date.now(),
+    };
+    void channel.send({ type: "broadcast", event: "reaction", payload: message });
+    const notice = { ...message, noticeId: `${message.clientId}-${message.sentAt}` };
+    setNotices((current) => [...current.slice(-2), notice]);
+    window.setTimeout(() => {
+      setNotices((current) => current.filter((item) => item.noticeId !== notice.noticeId));
+    }, 4200);
+    setPanelOpen(false);
+  }
+
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[19000] overflow-hidden">
-      {Array.from(others.values()).slice(0, MAX_VISIBLE_CURSORS).map((other) => {
+    <div className="pointer-events-none fixed inset-0 z-[19000] overflow-hidden">
+      <div aria-hidden="true">
+        {Array.from(others.values()).slice(0, MAX_VISIBLE_CURSORS).map((other) => {
         const cursor = other.cursor;
         if (!cursor) return null;
         const user = other.user;
@@ -176,7 +240,44 @@ export default function MultiplayerCursors({
             </span>
           </div>
         );
-      })}
+        })}
+      </div>
+
+      <div className="absolute bottom-4 right-4 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">
+        <div aria-live="polite" className="flex flex-col items-end gap-1.5">
+          {notices.map((notice) => {
+            const reaction = REACTIONS.find((item) => item.id === notice.reaction);
+            return (
+              <div key={notice.noticeId} className="multiplayer-notice border border-line bg-background/95 px-3 py-2 text-[9px] uppercase tracking-wide text-foreground shadow-lg backdrop-blur-sm">
+                <span className="mr-2" style={{ color: notice.user.color }}>{reaction?.icon}</span>
+                <span className="text-dim">{notice.user.name}:</span> {reaction?.label}
+              </div>
+            );
+          })}
+        </div>
+
+        {panelOpen && (
+          <div className="pointer-events-auto w-56 border border-line bg-background/95 p-2 shadow-xl backdrop-blur-sm">
+            <div className="mb-2 border-b border-line px-1 pb-2">
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-foreground">Leave a signal</p>
+              <p className="mt-1 text-[8px] leading-3 text-dim">Quick feedback, shared live with everyone here.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {REACTIONS.map((reaction) => (
+                <button key={reaction.id} type="button" onClick={() => sendReaction(reaction.id)} className="border border-line px-2 py-2 text-left text-[8px] uppercase leading-3 text-dim transition-colors hover:border-accent hover:text-accent">
+                  <span className="mr-1.5 text-accent">{reaction.icon}</span>{reaction.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button type="button" onClick={() => setPanelOpen((open) => !open)} aria-expanded={panelOpen} className="pointer-events-auto flex items-center gap-2 border border-line bg-background/95 px-3 py-2 text-[9px] uppercase tracking-wider text-dim shadow-lg backdrop-blur-sm transition-colors hover:border-accent hover:text-accent">
+          <span className="h-1.5 w-1.5 bg-green-400 shadow-[0_0_6px_rgb(74,222,128)]" />
+          {onlineCount} online
+          <span className="text-accent">{panelOpen ? "×" : "+ signal"}</span>
+        </button>
+      </div>
     </div>
   );
 }
