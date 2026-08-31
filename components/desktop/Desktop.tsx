@@ -13,7 +13,7 @@ import NotesApp from "./NotesApp";
 import ContactForm from "./ContactForm";
 import AboutWindow from "./AboutWindow";
 import PdfViewer from "./PdfViewer";
-import PdfThumbnail from "./PdfThumbnail";
+import ProjectsApp from "./ProjectsApp";
 import MinimizedDock from "./MinimizedDock";
 import WordleGame from "./WordleGame";
 import BackgroundPicker, { BACKGROUNDS } from "./BackgroundPicker";
@@ -28,13 +28,6 @@ const THEME_STORAGE_KEY = "portfolio-os-theme";
 type Theme = "dark" | "light";
 
 const DOC_PATH = "/case1.pdf";
-const PROJECTS = [
-  { title: "Selected Work 01", discipline: "Product / Interface", color: "#e3c828", src: DOC_PATH },
-  { title: "Selected Work 02", discipline: "Brand System", color: "#8b0000" },
-  { title: "Selected Work 03", discipline: "Digital Experience", color: "#000000" },
-  { title: "Selected Work 04", discipline: "Creative Development", color: "#fb00ec" },
-  { title: "Selected Work 05", discipline: "Prototype / Interaction", color: "#fff200" },
-] as const;
 const GUIDE_STORAGE_KEY = "portfolio-os-guide-seen";
 
 const WINDOW_TITLES = {
@@ -486,40 +479,14 @@ export default function Desktop({ multiplayerLayer }: { multiplayerLayer?: React
                 onOpenCase={() => openWindow("doc")}
               />
             ) : w.id === "works" ? (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {PROJECTS.map((project, index) => {
-                  const projectSrc = "src" in project ? project.src : undefined;
-                  const available = Boolean(projectSrc);
-                  return (
-                    <button
-                      key={project.title}
-                      ref={index === 0 ? docLauncherRef : undefined}
-                      type="button"
-                      disabled={!available}
-                      onClick={(event) => {
-                        if (!available) return;
-                        openWindow(
-                          "doc",
-                          toViewportRect(event.currentTarget.getBoundingClientRect())
-                        );
-                      }}
-                      className="group flex flex-col items-stretch border border-line p-1 text-left transition-colors hover:border-accent hover:text-accent disabled:cursor-default disabled:hover:border-line disabled:hover:text-foreground"
-                    >
-                      {projectSrc ? (
-                        <PdfThumbnail src={projectSrc} />
-                      ) : (
-                        <span className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border border-line" style={{ backgroundColor: project.color }}>
-                          <span className="bg-black/75 px-2 py-1 text-[9px] uppercase tracking-[0.1em] text-white">
-                            Details pending
-                          </span>
-                        </span>
-                      )}
-                      <span className="px-1 pt-1 text-[10px] font-bold uppercase tracking-[0.06em]">{project.title}</span>
-                      <span className="px-1 pb-1 text-[9px] text-dim">{project.discipline}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <ProjectsApp
+                onOpenPdf={(origin) => {
+                  docLauncherRef.current = document.activeElement instanceof HTMLButtonElement
+                    ? document.activeElement
+                    : null;
+                  openWindow("doc", origin);
+                }}
+              />
             ) : w.id === "doc" ? (
               <PdfViewer src={DOC_PATH} />
             ) : w.id === "about" ? (
